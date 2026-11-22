@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kecamatan Harapan - Ekspedisi Energi Terbarukan 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            touch-action: manipulation;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+        .dpad-btn {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+    </style>
+</head>
+<body class="text-slate-100 select-none">
+
+    <!-- AUDIO LATAR BELAKANG (OPENING & IN-GAME RETRO) -->
+    <audio id="bgmOpening" loop preload="auto">
+        <source src="https://cdn.jsdelivr.net/gh/anumukmin/game-musik@main/opening.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/anumukmin/game-musik/main/opening.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bgmIngame" loop preload="auto">
+        <source src="https://cdn.jsdelivr.net/gh/anumukmin/game-musik@95757423faf44313f15609ac6ae501458da80b43/ingame.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/anumukmin/game-musik/95757423faf44313f15609ac6ae501458da80b43/ingame.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/anumukmin/game-musik/main/ingame.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- HALAMAN DEPAN / LOGIN IDENTITAS SISWA (ADAPTIF PORTRAIT & LANDSCAPE) -->
+    <div id="start-screen" class="fixed inset-0 z-50 flex flex-col justify-between bg-slate-950 overflow-y-auto">
+        <!-- Gambar Latar Ilustrasi Kecamatan Harapan -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden bg-gradient-to-b from-sky-500 via-sky-200 to-emerald-800">
+            <img
+                src="https://raw.githubusercontent.com/anumukmin/game-musik/2033a2a8f441c92a3591f9855e11309bfd4a020e/Gemini_Generated_Image_rxjwltrxjwltrxjw.jpg"
+                onerror="this.src='https://placehold.co/1920x1080/0ea5e9/ffffff?text=KECAMATAN+HARAPAN+3D'"
+                alt="Kecamatan Harapan Ekspedisi Energi Terbarukan"
+                class="w-full h-full object-contain portrait:object-top landscape:object-cover"
+            >
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-slate-950/40"></div>
+        </div>
+
+        <!-- Baris Atas: Identitas Mata Pelajaran & Tombol Musik -->
+        <div class="relative z-10 flex items-center justify-between gap-2 p-3 sm:p-5">
+            <div class="glass-panel px-3 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center gap-2 shadow-lg">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs sm:text-sm font-semibold text-emerald-300 tracking-wide">PROJEK IPAS SMK • ENERGI TERBARUKAN</span>
+            </div>
+
+            <button
+                type="button"
+                onclick="toggleMusic()"
+                class="music-toggle-btn glass-panel hover:bg-slate-800 active:scale-95 transition px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-300 shadow-lg cursor-pointer"
+            >
+                <span class="music-icon text-base">🔊</span>
+                <span class="music-label">Musik: ON</span>
+            </button>
+        </div>
+
+        <!-- Kartu Login Pojok Kanan Bawah (Responsif HP Portrait / Landscape & Laptop) -->
+        <div class="relative z-10 w-full flex justify-center sm:justify-end items-end p-4 sm:p-8 mt-auto">
+            <div class="glass-panel w-full max-w-lg sm:max-w-xl rounded-3xl p-5 sm:p-8 shadow-2xl border border-emerald-400/35">
+                <div class="mb-4 sm:mb-5">
+                    <span class="inline-block px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-bold uppercase tracking-wider mb-1.5">
+                        Simulasi Eksplorasi 3D
+                    </span>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white leading-tight">
+                        Registrasi Teknisi Muda Energi
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                        Bantu Pak Camat & warga 5 desa membangun pembangkit energi bersih Kecamatan Harapan!
+                    </p>
+                </div>
+
+                <form id="loginForm" onsubmit="handleStartSubmit(event)" class="space-y-3.5 sm:space-y-4">
+                    <div>
+                        <label for="studentName" class="block text-xs sm:text-sm font-semibold text-slate-200 mb-1.5">Nama Lengkap Siswa</label>
+                        <input
+                            type="text"
+                            id="studentName"
+                            required
+                            placeholder="Contoh: Bimo Pratama"
+                            class="w-full px-4 py-3 sm:py-3.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-emerald-400 focus:outline-none text-sm sm:text-base text-white placeholder-slate-500"
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label for="studentClass" class="block text-xs sm:text-sm font-semibold text-slate-200 mb-1.5">Kelas</label>
+                            <input
+                                type="text"
+                                id="studentClass"
+                                required
+                                placeholder="Contoh: X TKR 1"
+                                class="w-full px-4 py-3 sm:py-3.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-emerald-400 focus:outline-none text-sm sm:text-base text-white placeholder-slate-500"
+                            >
+                        </div>
+                        <div>
+                            <label for="studentAbsen" class="block text-xs sm:text-sm font-semibold text-slate-200 mb-1.5">No. Absen</label>
+                            <input
+                                type="number"
+                                id="studentAbsen"
+                                min="1"
+                                max="60"
+                                required
+                                placeholder="01"
+                                class="w-full px-4 py-3 sm:py-3.5 rounded-xl bg-slate-900/90 border border-slate-700 focus:border-emerald-400 focus:outline-none text-sm sm:text-base text-white placeholder-slate-500"
+                            >
+                        </div>
+                    </div>
+
+                    <div id="loginErrorMsg" class="hidden text-xs sm:text-sm text-rose-300 bg-rose-950/80 border border-rose-500/40 rounded-lg px-3.5 py-2.5"></div>
+
+                    <button
+                        type="submit"
+                        class="w-full py-3.5 sm:py-4 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-[0.99] text-slate-950 font-extrabold text-base sm:text-lg shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2 cursor-pointer pulse-glow"
+                    >
+                        <span>🚀 Mulai Ekspedisi Energi 3D</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- DUNIA 3D UTAMA -->
+    <div id="game-ui" class="hidden fixed inset-0">
+        <div id="canvas-container"></div>
+
+        <!-- HUD ATAS -->
+        <div class="fixed top-0 left-0 right-0 z-20 p-2.5 sm:p-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+            <!-- Info Siswa & Skor -->
+            <div class="glass-panel px-3 py-2 rounded-2xl flex items-center gap-3 pointer-events-auto shadow-lg">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-lg">
+                    👷‍♂️
+                </div>
+                <div>
+                    <div id="hudPlayerName" class="text-xs sm:text-sm font-bold text-white leading-tight">Siswa SMK</div>
+                    <div class="flex items-center gap-2 text-[11px] text-slate-300">
+                        <span id="hudProgress">Desa: 0/5</span>
+                        <span>•</span>
+                        <span id="hudScore" class="text-amber-400 font-bold">Skor: 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontrol Cepat Kanan Atas -->
+            <div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+                <button
+                    type="button"
+                    onclick="toggleMusic()"
+                    class="music-toggle-btn glass-panel hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold text-amber-300 flex items-center gap-1.5 shadow-lg cursor-pointer"
+                >
+                    <span class="music-icon">🔊</span>
+                    <span class="music-label hidden sm:inline">Musik: ON</span>
+                </button>
+
+                <button
+                    type="button"
+                    onclick="openReportModal()"
+                    class="glass-panel hover:bg-slate-800 px-3 py-2 rounded-xl text-xs font-bold text-emerald-300 flex items-center gap-1.5 shadow-lg cursor-pointer"
+                >
+                    <span>📊</span>
+                    <span>Laporan</span>
+                </button>
+
+                <button
+                    type="button"
+                    onclick="backToStartScreen()"
+                    class="glass-panel hover:bg-slate-800 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 shadow-lg cursor-pointer"
+                    title="Kembali ke Halaman Awal"
+                >
+                    🏠
+                </button>
+            </div>
+        </div>
+
+        <!-- KOMPAS TELEPORT CEPAT 5 DESA -->
+        <div class="fixed top-16 sm:top-20 left-2.5 right-2.5 z-20 flex justify-center pointer-events-none">
+            <div class="glass-panel px-2 py-1.5 rounded-2xl flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-full pointer-events-auto shadow-lg">
+                <button type="button" onclick="teleportTo(0, 8)" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-200 whitespace-nowrap cursor-pointer">
+                    🏛️ Balai Kecamatan
+                </button>
+                <button type="button" onclick="teleportTo(-26, 12)" id="nav-surya" class="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-[11px] font-semibold text-amber-200 whitespace-nowrap cursor-pointer">
+                    ☀️ Desa Surya
+                </button>
+                <button type="button" onclick="teleportTo(25, 18)" id="nav-tirta" class="px-2.5 py-1 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/30 text-[11px] font-semibold text-sky-200 whitespace-nowrap cursor-pointer">
+                    💧 Desa Tirta
+                </button>
+                <button type="button" onclick="teleportTo(-16, -25)" id="nav-bayu" class="px-2.5 py-1 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/30 text-[11px] font-semibold text-teal-200 whitespace-nowrap cursor-pointer">
+                    🌬️ Desa Bayu
+                </button>
+                <button type="button" onclick="teleportTo(7, 25)" id="nav-makmur" class="px-2.5 py-1 rounded-xl bg-lime-500/20 hover:bg-lime-500/30 border border-lime-400/30 text-[11px] font-semibold text-lime-200 whitespace-nowrap cursor-pointer">
+                    🌱 Desa Makmur
+                </button>
+                <button type="button" onclick="teleportTo(24, -14)" id="nav-kawah" class="px-2.5 py-1 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-400/30 text-[11px] font-semibold text-orange-200 whitespace-nowrap cursor-pointer">
+                    🌋 Desa Kawah
+                </button>
+            </div>
+        </div>
+
+        <!-- PETUNJUK INTERAKSI DEKAT DESA / WARGA -->
+        <div id="proximity-banner" class="hidden fixed bottom-28 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-md">
+            <div class="glass-panel p-3 sm:p-4 rounded-2xl border border-emerald-400/40 shadow-2xl flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <div id="proxBadge" class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Lokasi Terdeteksi</div>
+                    <div id="proxTitle" class="text-sm font-extrabold text-white truncate">Desa Surya</div>
+                    <div id="proxSub" class="text-xs text-slate-300 truncate">Klik tombol untuk memulai misi</div>
+                </div>
+                <button
+                    type="button"
+                    id="proxActionBtn"
+                    class="shrink-0 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg cursor-pointer"
+                >
+                    Buka Misi
+                </button>
+            </div>
+        </div>
+
+        <!-- PANEL DIALOG OBROLAN WARGA DESA -->
+        <div id="npc-dialog-box" class="hidden fixed bottom-28 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 w-[94%] max-w-lg">
+            <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-amber-400/50 shadow-2xl">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <div id="npcAvatar" class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-xl">
+                            🧑‍🌾
+                        </div>
+                        <div>
+                            <h3 id="npcName" class="text-sm sm:text-base font-extrabold text-amber-300">Pak Darman</h3>
+                            <p id="npcRole" class="text-[11px] text-slate-400">Warga Desa Surya</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeNpcDialog()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+                <p id="npcSpeech" class="text-xs sm:text-sm text-slate-100 leading-relaxed bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+                    Halo Nak! Desa kami mendapat sinar matahari terik sepanjang tahun.
+                </p>
+                <div class="mt-2.5 flex items-center justify-between text-[11px] text-emerald-300">
+                    <span id="npcPotentialTag">💡 Potensi Utama: Energi Surya (PLTS)</span>
+                    <button type="button" onclick="closeNpcDialog()" class="font-bold underline cursor-pointer">Tutup Obrolan</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KONTROL SENTUH D-PAD UNTUK HP / TABLET -->
+        <div class="fixed bottom-4 left-4 z-20 sm:hidden">
+            <div class="grid grid-cols-3 gap-1.5 w-32 h-32">
+                <div></div>
+                <button type="button" onpointerdown="keysPressed.up=true" onpointerup="keysPressed.up=false" onpointerleave="keysPressed.up=false" class="dpad-btn glass-panel rounded-xl flex items-center justify-center text-lg font-bold active:bg-emerald-500/40">▲</button>
+                <div></div>
+                <button type="button" onpointerdown="keysPressed.left=true" onpointerup="keysPressed.left=false" onpointerleave="keysPressed.left=false" class="dpad-btn glass-panel rounded-xl flex items-center justify-center text-lg font-bold active:bg-emerald-500/40">◀</button>
+                <div class="rounded-xl bg-slate-900/50 border border-slate-800 flex items-center justify-center text-[10px] text-slate-400">JALAN</div>
+                <button type="button" onpointerdown="keysPressed.right=true" onpointerup="keysPressed.right=false" onpointerleave="keysPressed.right=false" class="dpad-btn glass-panel rounded-xl flex items-center justify-center text-lg font-bold active:bg-emerald-500/40">▶</button>
+                <div></div>
+                <button type="button" onpointerdown="keysPressed.down=true" onpointerup="keysPressed.down=false" onpointerleave="keysPressed.down=false" class="dpad-btn glass-panel rounded-xl flex items-center justify-center text-lg font-bold active:bg-emerald-500/40">▼</button>
+                <div></div>
+            </div>
+        </div>
+
+        <div class="hidden sm:block fixed bottom-3 left-4 z-10 glass-panel px-3 py-1.5 rounded-xl text-[11px] text-slate-300 pointer-events-none">
+            🎮 <b>WASD / Panah</b>: Jalan • <b>Seret Layar</b>: Putar Kamera • <b>Klik Warga</b>: Ngobrol
+        </div>
+    </div>
+
+    <!-- MODAL MISI PEMBANGKIT (TAHAP 1: MATERI -> TAHAP 2: PERAKITAN + BUKTI LISTRIK -> TAHAP 3: KUIS 10 SOAL A-E) -->
+    <div id="mission-modal" class="hidden fixed inset-0 z-40 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-5 overflow-y-auto">
+        <div class="glass-panel w-full max-w-3xl max-h-[92dvh] rounded-3xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+            <!-- Header Modal -->
+            <div class="p-4 sm:p-5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                    <div id="modalVillageTag" class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">DESA SURYA • PLTS</div>
+                    <h2 id="modalTitle" class="text-base sm:text-xl font-extrabold text-white">Pembangkit Listrik Tenaga Surya</h2>
+                </div>
+                <button type="button" onclick="closeMissionModal()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Stepper Indikator Tahapan -->
+            <div class="px-4 py-2.5 bg-slate-900/60 border-b border-slate-800 grid grid-cols-3 gap-2 text-center text-[11px] sm:text-xs font-bold">
+                <div id="stepTab1" class="py-1.5 px-2 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">1. Materi IPAS</div>
+                <div id="stepTab2" class="py-1.5 px-2 rounded-lg bg-slate-800 text-slate-400">2. Perakitan PLT</div>
+                <div id="stepTab3" class="py-1.5 px-2 rounded-lg bg-slate-800 text-slate-400">3. Kuis (10 Soal)</div>
+            </div>
+
+            <!-- Isi Modal Scrollable -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                <!-- TAHAP 1: PENDALAMAN MATERI IPAS LENGKAP -->
+                <div id="stage-material" class="space-y-4">
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+                        <h3 class="text-sm sm:text-base font-extrabold text-amber-300 flex items-center gap-2">
+                            <span>📘</span> Konsep Ilmiah & Prinsip Konversi Energi
+                        </h3>
+                        <p id="matConcept" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-4 rounded-2xl bg-sky-950/40 border border-sky-500/30 space-y-2">
+                            <h4 class="text-xs sm:text-sm font-extrabold text-sky-300">📐 Rumus & Perhitungan IPAS</h4>
+                            <p id="matFormula" class="text-xs sm:text-sm font-mono text-sky-100 bg-slate-950/70 p-2.5 rounded-xl"></p>
+                            <p id="matFormulaDesc" class="text-xs text-slate-300 leading-relaxed"></p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-2">
+                            <h4 class="text-xs sm:text-sm font-extrabold text-emerald-300">⚙️ Komponen Utama Pembangkit</h4>
+                            <ul id="matComponents" class="text-xs text-slate-200 space-y-1.5 list-disc list-inside"></ul>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-1.5">
+                        <h4 class="text-xs sm:text-sm font-extrabold text-amber-300">🌍 Analisis Potensi Lokal & Dampak Lingkungan</h4>
+                        <p id="matImpact" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button
+                            type="button"
+                            onclick="goToAssemblyStage()"
+                            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg transition cursor-pointer"
+                        >
+                            Lanjut ke Perakitan Sistem PLT →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAHAP 2: PERAKITAN SISTEM & BUKTI PENGHASILAN LISTRIK -->
+                <div id="stage-assembly" class="hidden space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="text-xs sm:text-sm text-slate-200">
+                            Susun <b>4 komponen utama</b> secara berurutan dari sumber energi hingga distribusi listrik ke rumah warga:
+                        </p>
+                        <button type="button" onclick="showMaterialStage()" class="text-xs font-bold text-amber-300 underline cursor-pointer">
+                            📘 Baca Materi Lagi
+                        </button>
+                    </div>
+
+                    <!-- Slot Rangkaian 1 - 4 -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="assemblySlots"></div>
+
+                    <!-- Pilihan Komponen Tersedia -->
+                    <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800">
+                        <div class="text-xs font-bold text-slate-400 mb-2">Klik Komponen Secara Berurutan (Sumber Energi → Pembangkit → Distribusi):</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="assemblyPool"></div>
+                    </div>
+
+                    <div id="assemblyFeedback" class="hidden p-3 rounded-xl text-xs sm:text-sm font-semibold"></div>
+
+                    <!-- PANEL BUKTI TELEMETRI LISTRIK AKTIF (MUNCUL SETELAH PERAKITAN SELESAI) -->
+                    <div id="builderProofBox" class="hidden p-4 rounded-2xl bg-gradient-to-br from-emerald-950/90 to-slate-900 border-2 border-emerald-400 shadow-xl space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                                <span class="text-xs sm:text-sm font-extrabold text-emerald-300 uppercase tracking-wide">
+                                    ⚡ Bukti Sistem Aktif Menghasilkan Listrik!
+                                </span>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">ONLINE • 220V AC</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                                <div class="text-[10px] text-slate-400">Daya Keluaran</div>
+                                <div id="proofPowerVal" class="text-sm sm:text-lg font-extrabold text-amber-400">12,5 kW</div>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                                <div class="text-[10px] text-slate-400">Tegangan & Frekuensi</div>
+                                <div class="text-sm sm:text-lg font-extrabold text-sky-300">220V / 50Hz</div>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                                <div class="text-[10px] text-slate-400">Rumah Terang</div>
+                                <div id="proofHomesVal" class="text-sm sm:text-lg font-extrabold text-emerald-300">45 Rumah</div>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-200 leading-relaxed">
+                            ✅ Pembangkit fisik kini telah berdiri di dunia 3D lengkap dengan <b>gardu suar hijau menyala, kabel transmisi ke rumah warga, serta aliran pulsa listrik</b>!
+                        </p>
+
+                        <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                            <button
+                                type="button"
+                                onclick="inspect3DPowerPlant()"
+                                class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-emerald-400/40 text-emerald-300 font-bold text-xs sm:text-sm cursor-pointer"
+                            >
+                                👀 Lihat Pembangkit Menyala di 3D
+                            </button>
+                            <button
+                                type="button"
+                                onclick="startQuizStage()"
+                                class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg cursor-pointer"
+                            >
+                                Lanjut Jawab Kuis (10 Soal) →
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="assemblyControls" class="flex items-center justify-between gap-2 pt-1">
+                        <button type="button" onclick="resetAssemblySlots()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer">
+                            🔄 Ulangi Susunan
+                        </button>
+                        <button type="button" onclick="verifyCircuitAssembly()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg cursor-pointer">
+                            ⚡ Uji & Nyalakan Pembangkit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAHAP 3: KUIS EVALUASI IPAS (10 SOAL PILIHAN GANDA A, B, C, D, E) -->
+                <div id="stage-quiz" class="hidden space-y-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <span id="quizCounter" class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-extrabold">
+                            Soal 1 dari 10
+                        </span>
+                        <button type="button" onclick="showMaterialStage()" class="text-xs font-bold text-amber-300 underline cursor-pointer">
+                            📘 Buka Materi IPAS
+                        </button>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-900/95 border border-slate-800">
+                        <p id="quizQuestionText" class="text-sm sm:text-base font-bold text-white leading-relaxed"></p>
+                    </div>
+
+                    <div id="quizOptionsContainer" class="space-y-2"></div>
+
+                    <div id="quizExplanationBox" class="hidden p-3.5 rounded-xl bg-slate-900 border border-sky-500/40 text-xs sm:text-sm text-sky-100 leading-relaxed"></div>
+
+                    <div class="flex justify-end pt-2">
+                        <button
+                            type="button"
+                            id="quizNextBtn"
+                            onclick="nextQuizQuestion()"
+                            class="hidden px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg cursor-pointer"
+                        >
+                            Soal Berikutnya →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LAPORAN HASIL BELAJAR -->
+    <div id="report-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+        <div class="glass-panel w-full max-w-xl rounded-3xl border border-slate-700 p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg sm:text-xl font-extrabold text-white">📊 Laporan Hasil Ekspedisi Energi</h2>
+                <button type="button" onclick="closeReportModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 font-bold cursor-pointer">✕</button>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1 text-xs sm:text-sm">
+                <div><span class="text-slate-400">Nama Siswa:</span> <b id="repName" class="text-white">-</b></div>
+                <div><span class="text-slate-400">Kelas / Absen:</span> <b id="repClass" class="text-white">-</b></div>
+                <div><span class="text-slate-400">Desa Selesai:</span> <b id="repCompleted" class="text-emerald-400">0 / 5 Desa</b></div>
+                <div><span class="text-slate-400">Total Skor Akhir:</span> <b id="repTotalScore" class="text-amber-400 text-base">0 Poin</b></div>
+            </div>
+
+            <div id="repVillageBreakdown" class="space-y-2"></div>
+
+            <!-- STATUS PENGIRIMAN OTOMATIS KE GOOGLE SPREADSHEET GURU -->
+            <div class="p-3.5 rounded-2xl bg-slate-900/95 border border-emerald-500/30 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-extrabold text-emerald-300">📡 Pengiriman Nilai ke Google Spreadsheet</span>
+                    <span id="sheetSyncStatus" class="text-[11px] font-bold text-slate-400">Siap Dikirim</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="button" onclick="submitScoreToGoogleSheet(true)" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm cursor-pointer">
+                        🚀 Kirim Nilai ke Spreadsheet
+                    </button>
+                    <button type="button" onclick="copyReportSummary()" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm cursor-pointer">
+                        📋 Salin Rekap
+                    </button>
+                </div>
+
+                <!-- Panel Konfigurasi Khusus Guru (Otomatis Tersembunyi / Terkunci bagi Siswa jika via Link Guru) -->
+                <div id="teacherSheetConfigSection" class="pt-2 border-t border-slate-800">
+                    <button type="button" onclick="toggleTeacherPanel()" class="text-[11px] font-bold text-amber-300 hover:underline cursor-pointer">
+                        🔐 Pengaturan Link Spreadsheet & Kode Macro (Khusus Guru)
+                    </button>
+
+                    <div id="teacherPanelBody" class="hidden mt-2.5 space-y-2.5">
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Tempel <b>URL Web App Google Apps Script</b> di bawah ini, lalu klik <b>Salin Link Game Terkunci</b> untuk dibagikan ke siswa (siswa tidak bisa mengubah/melihat link spreadsheet Anda):
+                        </p>
+                        <input
+                            type="url"
+                            id="teacherWebhookInput"
+                            placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                            class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-amber-400 focus:outline-none"
+                        >
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="saveAndCopyLockedStudentLink()" class="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs cursor-pointer">
+                                🔗 Salin Link Game Terkunci (Untuk Siswa)
+                            </button>
+                            <button type="button" onclick="copyAppsScriptCode()" class="py-2 px-3 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-200 font-bold text-xs cursor-pointer">
+                                📜 Salin Kode Apps Script
+                            </button>
+                        </div>
+                        <div id="teacherCopyNotice" class="hidden text-[11px] text-emerald-300 font-semibold"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+                <button type="button" onclick="closeReportModal()" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm cursor-pointer">
+                    Lanjut Jelajah 3D
+                </button>
+            </div>
+            <div id="copyFeedback" class="hidden text-center text-xs text-emerald-300 font-semibold">✅ Rekap nilai berhasil disalin ke clipboard!</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 0. KONFIGURASI GOOGLE SPREADSHEET GURU (BISA LANGSUNG DITEMPEL DI SINI)
+        // ==========================================
+        // Guru dapat menempel URL Web App Google Apps Script langsung di variabel di bawah ini,
+        // ATAU menggunakan tombol "Pengaturan Link Spreadsheet (Khusus Guru)" di menu Laporan:
+        const DEFAULT_SHEET_WEBHOOK_URL = "";
+
+        function getActiveSheetWebhook() {
+            const params = new URLSearchParams(window.location.search);
+            const encodedFromUrl = params.get('sheet');
+            if (encodedFromUrl) {
+                try {
+                    return atob(encodedFromUrl);
+                } catch (e) {
+                    return encodedFromUrl;
+                }
+            }
+            return DEFAULT_SHEET_WEBHOOK_URL || localStorage.getItem('harapan_sheet_webhook') || '';
+        }
+
+        function isStudentLockedMode() {
+            const params = new URLSearchParams(window.location.search);
+            return Boolean(DEFAULT_SHEET_WEBHOOK_URL || params.get('sheet'));
+        }
+
+        // ==========================================
+        // 1. STATUS GLOBAL & MANAJEMEN MUSIK LATAR
+        // ==========================================
+        const gameState = {
+            studentName: '',
+            studentClass: '',
+            studentAbsen: '',
+            musicEnabled: true,
+            inGame: false,
+            completedVillages: {},
+            assembledVillages: {},
+            scores: { surya: 0, tirta: 0, bayu: 0, makmur: 0, kawah: 0 }
+        };
+
+        function updateMusicUI() {
+            document.querySelectorAll('.music-icon').forEach(el => {
+                el.textContent = gameState.musicEnabled ? '🔊' : '🔇';
+            });
+            document.querySelectorAll('.music-label').forEach(el => {
+                el.textContent = gameState.musicEnabled ? 'Musik: ON' : 'Musik: OFF';
+            });
+        }
+
+        function syncBackgroundMusic() {
+            const bgmOpening = document.getElementById('bgmOpening');
+            const bgmIngame = document.getElementById('bgmIngame');
+            if (!bgmOpening || !bgmIngame) return;
+
+            if (!gameState.musicEnabled) {
+                bgmOpening.pause();
+                bgmIngame.pause();
+                return;
+            }
+
+            if (gameState.inGame) {
+                bgmOpening.pause();
+                bgmIngame.volume = 0.55;
+                bgmIngame.play().catch(() => {});
+            } else {
+                bgmIngame.pause();
+                bgmOpening.volume = 0.5;
+                bgmOpening.play().catch(() => {});
+            }
+        }
+
+        function toggleMusic() {
+            gameState.musicEnabled = !gameState.musicEnabled;
+            updateMusicUI();
+            syncBackgroundMusic();
+        }
+
+        document.addEventListener('pointerdown', () => {
+            if (!gameState.musicEnabled) return;
+            const targetAudio = gameState.inGame
+                ? document.getElementById('bgmIngame')
+                : document.getElementById('bgmOpening');
+            if (targetAudio && targetAudio.paused) {
+                targetAudio.play().catch(() => {});
+            }
+        });
+
+        // ==========================================
+        // 2. DATABASE 5 DESA, MATERI LENGKAP & 50 SOAL (A-E)
+        // ==========================================
+        const VILLAGES_DATA = [
+            {
+                id: 'surya',
+                name: 'Desa Surya',
+                plantName: 'PLTS (Pembangkit Listrik Tenaga Surya)',
+                pos: { x: -26, z: 12 },
+                color: 0xf59e0b,
+                powerOutput: '18,4 kW',
+                homesLit: '52 Rumah',
+                concept: 'PLTS mengubah energi radiasi foton cahaya matahari langsung menjadi energi listrik arus searah (DC) melalui efek fotovoltaik pada sel semikonduktor silikon (tipe-P dan tipe-N). Ketika foton menumbuk atom silikon, elektron terlepas dan mengalir menghasilkan arus listrik.',
+                formula: 'P = I × A × η   |   E = P × t',
+                formulaDesc: 'P = Daya listrik (Watt), I = Intensitas radiasi surya (W/m²), A = Luas permukaan panel (m²), η = Efisiensi panel (15%–22%), E = Energi listrik (Wh).',
+                components: [
+                    'Panel Surya Fotovoltaik (menangkap foton cahaya menjadi arus DC)',
+                    'Solar Charge Controller / MPPT (menstabilkan pengisian daya baterai)',
+                    'Baterai Penyimpan (menyimpan energi listrik untuk malam hari)',
+                    'Inverter DC ke AC (mengubah arus searah DC menjadi arus bolak-balik AC 220V)'
+                ],
+                impact: 'Desa Surya berada di lembah sabana terbuka dengan intensitas penyinaran tinggi (>5 kWh/m²/hari) dan minim tutupan pohon, sehingga sangat ideal untuk PLTS tanpa emisi gas rumah kaca.',
+                assemblyOrder: [
+                    { id: 'pv', label: 'Panel Surya Fotovoltaik', desc: 'Menangkap radiasi matahari menjadi arus listrik DC' },
+                    { id: 'scc', label: 'Solar Charge Controller', desc: 'Mengatur tegangan pengisian menuju baterai' },
+                    { id: 'bat', label: 'Bank Baterai VRLA', desc: 'Menyimpan cadangan energi listrik' },
+                    { id: 'inv', label: 'Inverter DC ke AC 220V', desc: 'Mengubah listrik DC menjadi AC untuk rumah warga' }
+                ],
+                questions: [
+                    {
+                        q: 'Peristiwa fisis yang terjadi ketika foton cahaya matahari menumbuk sel silikon sehingga melepaskan elektron dan menghasilkan arus listrik disebut...',
+                        options: ['Efek Termoelektrik', 'Efek Fotovoltaik', 'Induksi Elektromagnetik', 'Elektrolisis Air', 'Efek Piezoelektrik'],
+                        answer: 1,
+                        exp: 'Efek fotovoltaik adalah fenomena munculnya tegangan dan arus listrik pada material semikonduktor (silikon) saat terkena paparan foton cahaya.'
+                    },
+                    {
+                        q: 'Jenis arus listrik yang pertama kali dihasilkan oleh modul panel surya sebelum melewati inverter adalah...',
+                        options: ['Arus bolak-balik (AC) 3 fasa', 'Arus searah (DC)', 'Arus induksi frekuensi tinggi', 'Arus statis kapasitif', 'Arus bolak-balik (AC) 220 V'],
+                        answer: 1,
+                        exp: 'Sel surya menghasilkan arus listrik searah (Direct Current / DC) karena aliran elektron bergerak satu arah dari lapisan N ke lapisan P.'
+                    },
+                    {
+                        q: 'Fungsi utama komponen Inverter pada instalasi PLTS Desa Surya adalah...',
+                        options: ['Menyimpan energi listrik saat mendung', 'Menurunkan tegangan dari 220 V menjadi 12 V', 'Mengubah arus searah (DC) menjadi arus bolak-balik (AC)', 'Menyerap panas berlebih pada panel', 'Memutus arus petir ke tanah'],
+                        answer: 2,
+                        exp: 'Inverter berfungsi mengonversi listrik DC dari panel/baterai menjadi listrik AC 220V/50Hz agar sesuai dengan peralatan rumah tangga.'
+                    },
+                    {
+                        q: 'Jika sebuah rangkaian panel surya memiliki luas total 10 m², efisiensi 20%, dan menerima radiasi matahari 1.000 W/m², berapakah daya listrik yang dihasilkan?',
+                        options: ['200 Watt', '1.000 Watt', '2.000 Watt', '5.000 Watt', '10.000 Watt'],
+                        answer: 2,
+                        exp: 'P = I × A × η = 1.000 W/m² × 10 m² × 0,20 = 2.000 Watt (2 kW).'
+                    },
+                    {
+                        q: 'Komponen PLTS yang bertugas melindungi baterai dari pengisian berlebih (overcharge) maupun pengosongan ekstrem adalah...',
+                        options: ['Inverter', 'Transformator Step-Up', 'Solar Charge Controller (SCC)', 'Generator Sinkron', 'Turbin Pelton'],
+                        answer: 2,
+                        exp: 'Solar Charge Controller (SCC/MPPT) mengatur arus dan tegangan pengisian dari panel surya ke baterai agar umur baterai awet.'
+                    },
+                    {
+                        q: 'Mengapa area pemasangan panel surya di Desa Surya ditempatkan di padang terbuka yang jauh dari pepohonan tinggi?',
+                        options: ['Agar panel mudah terkena angin kencang', 'Menghindari efek bayangan (shading) yang menurunkan output arus drastis', 'Supaya air hujan tidak mengenai kaca panel', 'Karena panel surya membutuhkan suhu sangat dingin', 'Agar kabel transmisi menjadi lebih panjang'],
+                        answer: 1,
+                        exp: 'Bayangan (shading) pada sebagian sel surya dapat menghambat aliran elektron seluruh rangkaian seri panel dan menurunkan daya secara signifikan.'
+                    },
+                    {
+                        q: 'Bahan semikonduktor yang paling umum digunakan sebagai bahan dasar pembuatan sel surya komersial adalah...',
+                        options: ['Tembaga (Cu)', 'Silikon (Si)', 'Aluminium (Al)', 'Timbal (Pb)', 'Belerang (S)'],
+                        answer: 1,
+                        exp: 'Silikon (Si) kristal tunggal (monocrystalline) maupun polikristalin adalah semikonduktor utama pembuat sel fotovoltaik.'
+                    },
+                    {
+                        q: 'Sebuah lampu jalan LED PLTS berdaya 50 Watt menyala selama 10 jam setiap malam. Berapa energi listrik yang dikonsumsi per malam?',
+                        options: ['5 Wh', '50 Wh', '250 Wh', '500 Wh', '5.000 Wh'],
+                        answer: 3,
+                        exp: 'E = P × t = 50 Watt × 10 jam = 500 Wh (0,5 kWh).'
+                    },
+                    {
+                        q: 'Apa keunggulan utama PLTS dibandingkan PLTD (Pembangkit Listrik Tenaga Diesel) bagi masyarakat pedesaan?',
+                        options: ['Dapat menghasilkan daya besar saat tengah malam tanpa baterai', 'Tidak menghasilkan emisi karbon (CO₂) dan biaya bahan bakar nol', 'Tidak memerlukan perawatan pembersihan debu sama sekali', 'Bekerja optimal di dalam ruangan tertutup', 'Menghasilkan limbah oli bekas yang dapat dijual'],
+                        answer: 1,
+                        exp: 'PLTS memanfaatkan sinar matahari gratis tanpa pembakaran bahan bakar fosil sehingga bebas polusi udara dan suara.'
+                    },
+                    {
+                        q: 'Faktor cuaca berikut yang menyebabkan penurunan tegangan dan daya keluaran PLTS secara langsung di siang hari adalah...',
+                        options: ['Angin bertiup sepoi-sepoi', 'Tutupan awan mendung tebal yang menghalangi radiasi foton', 'Kelembapan tanah di sekitar tiang', 'Tekanan udara permukaan laut', 'Arah mata angin dari selatan'],
+                        answer: 1,
+                        exp: 'Awan mendung tebal mengurangi intensitas radiasi matahari (W/m²) yang mencapai permukaan sel surya.'
+                    }
+                ]
+            },
+            {
+                id: 'tirta',
+                name: 'Desa Tirta',
+                plantName: 'PLTMH (Pembangkit Listrik Tenaga Mikrohidro)',
+                pos: { x: 25, z: 18 },
+                color: 0x0ea5e9,
+                powerOutput: '45,0 kW',
+                homesLit: '110 Rumah',
+                concept: 'PLTMH memanfaatkan energi potensial gravitasi air terjun atau aliran sungai berdebit stabil. Air dialirkan melalui pipa pesat (penstock) untuk memutar sudu turbin air (energi kinetik & mekanik), yang kemudian dikopel ke generator sinkron untuk menghasilkan listrik AC.',
+                formula: 'P = ρ × g × Q × H × η',
+                formulaDesc: 'ρ = Massa jenis air (1.000 kg/m³), g = Gravitasi (9,8 m/s²), Q = Debit air (m³/s), H = Tinggi jatuh air/head (m), η = Efisiensi sistem.',
+                components: [
+                    'Bendung & Bak Penenang (menampung dan menyaring sampah/pasir sungai)',
+                    'Pipa Pesat / Penstock (mengalirkan air bertekanan dari ketinggian ke turbin)',
+                    'Turbin Air Crossflow/Pelton (mengubah energi tekanan air menjadi putaran mekanik)',
+                    'Generator & Panel Kontrol (mengubah energi mekanik putaran menjadi listrik AC)'
+                ],
+                impact: 'Sungai Desa Tirta memiliki aliran air jernih sepanjang tahun dengan beda tinggi (head) alami 12 meter. Pelestarian hutan hulu wajib dijaga agar debit sungai tidak menyusut saat kemarau.',
+                assemblyOrder: [
+                    { id: 'weir', label: 'Bendung & Bak Penenang', desc: 'Menyaring sedimen dan menjaga ketinggian muka air' },
+                    { id: 'penstock', label: 'Pipa Pesat (Penstock)', desc: 'Menyalurkan air bertekanan menuju rumah turbin' },
+                    { id: 'turbine', label: 'Turbin Air Crossflow', desc: 'Mengubah energi kinetik air menjadi putaran poros' },
+                    { id: 'gen', label: 'Generator Sinkron AC', desc: 'Mengonversi energi mekanik poros menjadi listrik' }
+                ],
+                questions: [
+                    {
+                        q: 'Urutan perubahan bentuk energi yang paling tepat pada sistem PLTMH Desa Tirta adalah...',
+                        options: ['Kimia → Panas → Mekanik → Listrik', 'Potensial Air → Kinetik Air → Mekanik Turbin → Listrik', 'Cahaya → Kinetik → Kimia → Listrik', 'Panas Bumi → Uap → Mekanik → Listrik', 'Nuklir → Termal → Kinetik → Listrik'],
+                        answer: 1,
+                        exp: 'Air pada ketinggian memiliki energi potensial, berubah menjadi energi kinetik di pipa pesat, memutar turbin (mekanik), lalu diubah generator menjadi listrik.'
+                    },
+                    {
+                        q: 'Dua parameter hidrologi dan topografi utama yang menentukan besarnya daya listrik PLTMH adalah...',
+                        options: ['Suhu air dan warna dasar sungai', 'Debit aliran air (Q) dan tinggi jatuh air (Head/H)', 'Kadar oksigen terlarut dan pH air', 'Lebar jembatan dan panjang jalan desa', 'Kecepatan angin dan kelembapan udara'],
+                        answer: 1,
+                        exp: 'Sesuai rumus P = ρ·g·Q·H·η, daya PLTMH berbanding lurus dengan debit air (Q) dan ketinggian jatuh efektif (H).'
+                    },
+                    {
+                        q: 'Fungsi pipa pesat (penstock) dalam instalasi PLTMH adalah...',
+                        options: ['Membuang air limbah pabrik ke hilir', 'Mengalirkan air dari bak penenang menuju turbin dengan tekanan tinggi', 'Menyaring ikan agar tidak masuk ke sungai', 'Menyimpan cadangan listrik saat malam hari', 'Mendinginkan kumparan generator'],
+                        answer: 1,
+                        exp: 'Pipa pesat (penstock) mengarahkan aliran air dari elevasi atas ke rumah turbin secara tertutup sehingga energi potensial berubah menjadi tekanan dan kecepatan.'
+                    },
+                    {
+                        q: 'Sebuah sungai di Desa Tirta memiliki debit 0,5 m³/s dan tinggi jatuh (head) 10 meter. Jika g = 10 m/s², ρ = 1.000 kg/m³, dan efisiensi 80%, daya listrik yang dihasilkan adalah...',
+                        options: ['4.000 Watt (4 kW)', '20.000 Watt (20 kW)', '40.000 Watt (40 kW)', '50.000 Watt (50 kW)', '80.000 Watt (80 kW)'],
+                        answer: 2,
+                        exp: 'P = 1.000 × 10 × 0,5 × 10 × 0,80 = 40.000 Watt = 40 kW.'
+                    },
+                    {
+                        q: 'Mengapa bak penenang (forebay) dilengkapi saringan sampah (trash rack) sebelum air masuk ke pipa pesat?',
+                        options: ['Agar air berubah menjadi uap panas', 'Mencegah ranting, daun, dan batu merusak sudu turbin air', 'Meningkatkan kadar garam dalam air', 'Mengurangi kecepatan putaran generator hingga nol', 'Mengubah arus AC menjadi DC'],
+                        answer: 1,
+                        exp: 'Material padat seperti batu atau kayu yang masuk ke pipa pesat bertekanan tinggi dapat mematahkan sudu turbin.'
+                    },
+                    {
+                        q: 'Prinsip fisika yang digunakan oleh generator PLTMH untuk menghasilkan gaya gerak listrik (GGL) induksi adalah...',
+                        options: ['Hukum Pascal', 'Hukum Induksi Elektromagnetik Faraday', 'Hukum Archimedes', 'Hukum Boyle', 'Hukum Kekekalan Momentum Sudut'],
+                        answer: 1,
+                        exp: 'Generator bekerja berdasarkan Hukum Faraday: perubahan fluks magnetik akibat putaran rotor terhadap kumparan stator menghasilkan GGL induksi.'
+                    },
+                    {
+                        q: 'Apa perbedaan utama antara PLTMH (Mikrohidro) dengan PLTA skala raksasa?',
+                        options: ['PLTMH menggunakan bahan bakar batu bara sebagai cadangan', 'PLTMH berkapasitas kecil (<100 kW) dan umumnya memanfaatkan aliran sungai tanpa bendungan raksasa', 'PLTMH tidak menggunakan turbin maupun generator', 'PLTMH hanya beroperasi saat air laut pasang', 'PLTMH menghasilkan listrik bertegangan 500.000 Volt'],
+                        answer: 1,
+                        exp: 'PLTMH berdaya di bawah 100 kW dengan sistem run-of-river sehingga ramah ekosistem sungai dan tidak menenggelamkan pemukiman.'
+                    },
+                    {
+                        q: 'Jika terjadi penebangan hutan liar di bagian hulu sungai Desa Tirta, dampak langsung terhadap PLTMH adalah...',
+                        options: ['Daya listrik meningkat drastis sepanjang tahun', 'Debit air fluktuatif (banjir berlumpur saat hujan, kering saat kemarau)', 'Suhu air sungai mendidih secara alami', 'Efisiensi panel surya ikut menurun', 'Tegangan listrik naik menjadi 1.000 Volt'],
+                        answer: 1,
+                        exp: 'Kerusakan daerah tangkapan air (hulu) menghilangkan kemampuan tanah menyerap air hujan sehingga PLTMH kekurangan debit saat kemarau.'
+                    },
+                    {
+                        q: 'Alat yang digunakan pada PLTMH untuk menjaga frekuensi listrik tetap stabil pada 50 Hz ketika beban rumah warga berubah-ubah adalah...',
+                        options: ['Electronic Load Controller (ELC) / Ballast Load', 'Solar Charge Controller', 'Digester Anaerob', 'Menara Pendingin', 'Anemometer'],
+                        answer: 0,
+                        exp: 'ELC mengalihkan kelebihan daya listrik ke beban penyeimbang (ballast load) sehingga putaran turbin dan frekuensi 50 Hz tetap konstan.'
+                    },
+                    {
+                        q: 'Salah satu kelebihan PLTMH dibandingkan PLTS dan PLTB dalam melayani kebutuhan listrik desa adalah...',
+                        options: ['Dapat beroperasi 24 jam penuh selama debit air sungai tersedia', 'Tidak membutuhkan air sama sekali', 'Bisa dipindahkan ke puncak gunung yang kering', 'Tidak memerlukan jaringan kabel distribusi', 'Bekerja menggunakan radiasi sinar gamma'],
+                        answer: 0,
+                        exp: 'Selama aliran sungai mengalir stabil, PLTMH dapat membangkitkan listrik terus-menerus siang maupun malam.'
+                    }
+                ]
+            },
+            {
+                id: 'bayu',
+                name: 'Desa Bayu',
+                plantName: 'PLTB (Pembangkit Listrik Tenaga Bayu/Angin)',
+                pos: { x: -16, z: -25 },
+                color: 0x14b8a6,
+                powerOutput: '60,0 kW',
+                homesLit: '140 Rumah',
+                concept: 'PLTB memanfaatkan energi kinetik massa udara yang bergerak (angin) akibat perbedaan tekanan dan suhu atmosfer. Hembusan angin mengenai bilah aerodinamis rotor sehingga menimbulkan gaya angkat (lift) yang memutar poros utama menuju gearbox dan generator.',
+                formula: 'P = ½ × ρ × A × v³ × Cp',
+                formulaDesc: 'ρ = Kerapatan udara (~1,225 kg/m³), A = Luas sapuan bilah rotor (π·r²), v = Kecepatan angin (m/s), Cp = Koefisien daya turbin (maksimal batas Betz 0,593).',
+                components: [
+                    'Bilah Rotor Aerodinamis (menangkap energi kinetik angin menjadi torsi putar)',
+                    'Gearbox / Sistem Transmisi (menaikkan kecepatan putaran poros rendah ke tinggi)',
+                    'Nacelle & Generator (mengubah putaran poros menjadi energi listrik AC)',
+                    'Menara Baja & Sistem Yaw (menempatkan rotor pada ketinggian angin optimal)'
+                ],
+                impact: 'Punggung bukit utara Desa Bayu merupakan lorong angin alami dengan kecepatan angin rata-rata 6–9 m/s. Penempatan turbin di punggung bukit menghindari turbulensi bangunan.',
+                assemblyOrder: [
+                    { id: 'tower', label: 'Pondasi & Menara Turbin', desc: 'Menopang rotor pada ketinggian angin stabil' },
+                    { id: 'rotor', label: 'Hub & Bilah Rotor Aerodinamis', desc: 'Menangkap energi kinetik hembusan angin' },
+                    { id: 'gear', label: 'Gearbox & Nacelle Generator', desc: 'Menaikkan putaran dan membangkitkan listrik' },
+                    { id: 'trafo', label: 'Transformator & Jaringan Desa', desc: 'Menyalurkan daya listrik ke pemukiman' }
+                ],
+                questions: [
+                    {
+                        q: 'Berdasarkan rumus daya angin P = ½·ρ·A·v³·Cp, jika kecepatan angin (v) meningkat menjadi 2 kali lipat, maka potensi daya angin meningkat sebesar...',
+                        options: ['2 kali lipat', '4 kali lipat', '6 kali lipat', '8 kali lipat', '16 kali lipat'],
+                        answer: 3,
+                        exp: 'Karena daya angin sebanding dengan pangkat tiga kecepatan angin (v³), maka 2³ = 8 kali lipat.'
+                    },
+                    {
+                        q: 'Mengapa menara turbin angin di Desa Bayu dibangun menjulang tinggi di atas punggung bukit?',
+                        options: ['Agar terhindar dari banjir bandang sungai', 'Karena kecepatan angin lebih kencang dan minim turbulensi di ketinggian terbuka', 'Supaya lebih dekat dengan awan hujan', 'Agar bayangan turbin menutupi sawah warga', 'Karena udara di atas bukit mengandung gas metana'],
+                        answer: 1,
+                        exp: 'Gesekan dengan permukaan tanah dan pepohonan memperlambat angin di dekat tanah; semakin tinggi menara, aliran angin semakin laminar dan cepat.'
+                    },
+                    {
+                        q: 'Alat ukur meteorologi yang digunakan untuk mengukur kecepatan angin sebelum menentukan lokasi pembangunan PLTB adalah...',
+                        options: ['Barometer', 'Higrometer', 'Anemometer', 'Termometer', 'Amperemeter'],
+                        answer: 2,
+                        exp: 'Anemometer berfungsi mengukur kecepatan angin (m/s), sedangkan wind vane mengukur arah datangnya angin.'
+                    },
+                    {
+                        q: 'Batas efisiensi teoretis maksimum yang dapat diekstraksi oleh turbin angin dari aliran udara bebas dikenal sebagai...',
+                        options: ['Hukum Ohm', 'Batas Betz (59,3%)', 'Efek Doppler', 'Konstanta Planck', 'Batas Carnot'],
+                        answer: 1,
+                        exp: 'Hukum/Batas Betz menyatakan bahwa tidak ada turbin angin yang dapat menangkap lebih dari 16/27 (59,3%) energi kinetik angin.'
+                    },
+                    {
+                        q: 'Fungsi utama komponen Gearbox di dalam rumah mesin (nacelle) turbin angin sumbu horizontal adalah...',
+                        options: ['Mengubah energi cahaya menjadi listrik', 'Menaikkan kecepatan putaran poros rotor yang lambat agar sesuai putaran generator', 'Menyimpan cadangan air bersih', 'Menghentikan bilah saat angin sepoi-sepoi', 'Mengubah gas metana menjadi panas'],
+                        answer: 1,
+                        exp: 'Bilah turbin besar berputar relatif lambat (15–30 rpm), sehingga gearbox menaikkan putarannya hingga >1.000 rpm untuk generator.'
+                    },
+                    {
+                        q: 'Bentuk penampang melintang bilah turbin angin modern dirancang menyerupai sayap pesawat (airfoil) dengan tujuan...',
+                        options: ['Mengurangi berat menara baja', 'Menciptakan perbedaan tekanan udara sehingga timbul gaya angkat (lift) pemutar rotor', 'Memantulkan sinar matahari ke desa', 'Menampung air hujan di ujung bilah', 'Menghasilkan bunyi sirene peringatan'],
+                        answer: 1,
+                        exp: 'Desain airfoil menghasilkan gaya angkat (lift) aerodinamis yang jauh lebih efisien memutar rotor dibanding sekadar gaya dorong (drag).'
+                    },
+                    {
+                        q: 'Sistem pada turbin angin yang berfungsi memutar arah kepala turbin (nacelle) agar selalu menghadap arah datangnya angin disebut...',
+                        options: ['Sistem Yaw (Yaw Drive)', 'Sistem Fotovoltaik', 'Sistem Biodigester', 'Sistem Kondensor', 'Sistem Irigasi'],
+                        answer: 0,
+                        exp: 'Yaw system menggunakan sensor arah angin (wind vane) dan motor penggerak untuk mengarahkan rotor tegak lurus terhadap hembusan angin.'
+                    },
+                    {
+                        q: 'Apa yang terjadi secara otomatis ketika kecepatan angin melampaui batas aman maksimum (cut-out wind speed) saat badai?',
+                        options: ['Turbin berputar semakin cepat tanpa batas', 'Sistem pengereman dan pitch control menghentikan rotor untuk mencegah kerusakan mekanis', 'Menara turbin diturunkan ke dalam tanah', 'Generator berubah menjadi pemanas air', 'Bilah turbin dilepas satu per satu'],
+                        answer: 1,
+                        exp: 'Fitur keselamatan aerodynamic pitch control & mechanical brake menghentikan putaran rotor saat badai ekstrem agar struktur tidak patah.'
+                    },
+                    {
+                        q: 'Terjadinya angin lokal di kawasan perbukitan dan pesisir pada dasarnya disebabkan oleh...',
+                        options: ['Perbedaan tekanan udara akibat pemanasan permukaan bumi yang tidak merata oleh matahari', 'Rotasi inti dalam bumi yang cair', 'Gaya tarik gravitasi bulan purnama', 'Getaran kendaraan bermotor di jalan raya', 'Aktivitas penambangan batu kapur'],
+                        answer: 0,
+                        exp: 'Radiasi matahari memanaskan permukaan daratan/laut secara berbeda sehingga memicu perbedaan tekanan atmosfer dan pergerakan massa udara (angin).'
+                    },
+                    {
+                        q: 'Tantangan utama pengoperasian PLTB di wilayah pedesaan yang perlu diatasi dengan sistem penyimpanan energi (baterai/grid) adalah...',
+                        options: ['Emisi asap belerang yang pekat', 'Sifat kecepatan angin yang fluktuatif (intermiten)', 'Kebutuhan bahan bakar solar yang mahal', 'Limbah radioaktif dari bilah rotor', 'Suhu air pendingin yang terlalu panas'],
+                        answer: 1,
+                        exp: 'Angin tidak selalu bertiup dengan kecepatan konstan setiap saat (intermiten), sehingga membutuhkan baterai atau integrasi jaringan pembangkit lain.'
+                    }
+                ]
+            },
+            {
+                id: 'makmur',
+                name: 'Desa Makmur',
+                plantName: 'PLTBg (Pembangkit Listrik Tenaga Biogas)',
+                pos: { x: 7, z: 25 },
+                color: 0x84cc16,
+                powerOutput: '28,0 kW',
+                homesLit: '75 Rumah',
+                concept: 'PLTBg memanfaatkan proses fermentasi anaerobik (penguraian bahan organik tanpa oksigen oleh bakteri metanogen) terhadap kotoran ternak dan limbah pasar menjadi biogas yang kaya gas metana (CH₄). Gas metana dibakar pada mesin generator gas untuk menghasilkan listrik.',
+                formula: 'C₆H₁₂O₆ → 3CO₂ + 3CH₄   |   E_listrik = V_CH₄ × LHV × η',
+                formulaDesc: 'CH₄ = Gas Metana (55%–70% komposisi biogas), LHV = Nilai kalor bawah metana (~35,8 MJ/m³), η = Efisiensi mesin generator biogas.',
+                components: [
+                    'Bak Pencampur Limbah Organik (mencampur kotoran ternak/limbah pasar dengan air)',
+                    'Kubah Biodigester Anaerob (ruang kedap udara tempat bakteri menghasilkan gas CH₄)',
+                    'Unit Pemurni Gas / Scrubber (menghilangkan gas korosif H₂S dan uap air)',
+                    'Generator Mesin Biogas (mengubah energi kimia pembakaran CH₄ menjadi listrik)'
+                ],
+                impact: 'Desa Makmur memiliki sentra peternakan sapi perah dan pasar rakyat. Mengolah kotoran ternak menjadi biogas mencegah pencemaran sungai, mengurangi bau, sekaligus menghasilkan pupuk organik cair (bio-slurry).',
+                assemblyOrder: [
+                    { id: 'mixer', label: 'Bak Pencampur Limbah Organik', desc: 'Menyiapkan substrat kotoran ternak & air' },
+                    { id: 'digester', label: 'Kubah Biodigester Anaerob', desc: 'Fermentasi tanpa oksigen menghasilkan gas CH₄' },
+                    { id: 'scrubber', label: 'Pemurni Gas (H₂S Scrubber)', desc: 'Membersihkan biogas agar aman bagi mesin' },
+                    { id: 'biogen', label: 'Generator Mesin Gas (PLTBg)', desc: 'Mengubah energi pembakaran metana menjadi listrik' }
+                ],
+                questions: [
+                    {
+                        q: 'Komponen gas utama yang mudah terbakar dan menjadi sumber energi kalor pada biogas hasil fermentasi kotoran ternak adalah...',
+                        options: ['Oksigen (O₂)', 'Nitrogen (N₂)', 'Metana (CH₄)', 'Karbon Monoksida (CO)', 'Helium (He)'],
+                        answer: 2,
+                        exp: 'Biogas umumnya mengandung 55%–70% gas metana (CH₄) yang memiliki nilai kalor tinggi untuk pembakaran mesin generator.'
+                    },
+                    {
+                        q: 'Kondisi lingkungan wajib di dalam kubah biodigester agar bakteri metanogen dapat menguraikan limbah organik menjadi biogas adalah...',
+                        options: ['Anaerob (kedap udara / tanpa oksigen bebas)', 'Aerob (kaya oksigen bertekanan tinggi)', 'Suhu beku di bawah 0°C', 'Terpapar sinar ultraviolet secara langsung', 'Kadar garam sangat tinggi (>20%)'],
+                        answer: 0,
+                        exp: 'Bakteri metanogen bersifat anaerobik wajib; keberadaan oksigen akan menghambat pembentukan gas metana.'
+                    },
+                    {
+                        q: 'Urutan perubahan energi pada Pembangkit Listrik Tenaga Biogas (PLTBg) di Desa Makmur adalah...',
+                        options: ['Kinetik → Potensial → Listrik', 'Kimia (Biogas) → Termal (Panas) → Mekanik → Listrik', 'Cahaya → Kimia → Nuklir → Listrik', 'Gravitasi → Magnetik → Listrik', 'Bunyi → Termal → Listrik'],
+                        answer: 1,
+                        exp: 'Energi kimia dalam ikatan molekul gas metana dibakar menjadi energi panas, menggerakkan piston mesin (mekanik), lalu diubah generator menjadi listrik.'
+                    },
+                    {
+                        q: 'Mengapa gas hidrogen sulfida (H₂S) perlu disaring menggunakan unit scrubber sebelum biogas dialirkan ke generator mesin?',
+                        options: ['Karena H₂S membuat mesin berputar terlalu lambat', 'Karena H₂S bersifat korosif (menyebabkan karat) pada komponen logam mesin', 'Karena H₂S mengubah listrik AC menjadi DC', 'Karena H₂S menurunkan suhu udara sekitar desa', 'Karena H₂S membuat lampu LED berkedip'],
+                        answer: 1,
+                        exp: 'Gas H₂S yang terbakar bersama uap air membentuk asam sulfat lemah yang bersifat korosif dan merusak silinder mesin generator.'
+                    },
+                    {
+                        q: 'Produk sampingan berupa ampas cair/padat keluaran biodigester (bio-slurry) sangat bermanfaat bagi petani Desa Makmur sebagai...',
+                        options: ['Bahan bakar pesawat terbang', 'Pupuk organik berkualitas tinggi yang kaya unsur hara', 'Bahan baku pembuatan kaca panel surya', 'Pestisida kimia sintetik beracun', 'Campuran aspal jalan raya'],
+                        answer: 1,
+                        exp: 'Bio-slurry telah mengalami penguraian sempurna sehingga bebas patogen dan kaya nitrogen, fosfor, serta kalium untuk menyuburkan tanaman.'
+                    },
+                    {
+                        q: 'Dampak positif pengelolaan kotoran ternak menjadi biogas terhadap pemanasan global adalah...',
+                        options: ['Menambah lubang lapisan ozon', 'Mencegah pelepasan langsung gas metana liar ke atmosfer yang 25× lebih kuat memerangkap panas dibanding CO₂', 'Meningkatkan kadar karbon monoksida di udara', 'Mempercepat penguapan air sungai', 'Menurunkan kesuburan tanah pertanian'],
+                        answer: 1,
+                        exp: 'Gas metana (CH₄) memiliki potensi pemanasan global (GWP) sekitar 25–28 kali lebih besar daripada CO₂ jika dibiarkan terlepas bebas dari tumpukan kotoran.'
+                    },
+                    {
+                        q: 'Bahan baku berikut yang PALING cocok dimasukkan ke dalam biodigester Desa Makmur adalah...',
+                        options: ['Botol plastik PET dan kaleng aluminium', 'Kotoran sapi, sisa sayuran pasar, dan limbah tahu', 'Pecahan kaca dan keramik bangunan', 'Oli bekas bengkel dan aki rusak', 'Batu kerikil dan pasir sungai'],
+                        answer: 1,
+                        exp: 'Biodigester hanya dapat menguraikan biomassa organik yang mudah terfermentasi seperti kotoran ternak dan sisa sayuran/buah.'
+                    },
+                    {
+                        q: 'Tahap biokimia terakhir dalam proses pembentukan biogas di dalam digester oleh kelompok bakteri Archaea disebut...',
+                        options: ['Fotosintesis', 'Metanogenesis', 'Kondensasi', 'Sublimasi', 'Kristalisasi'],
+                        answer: 1,
+                        exp: 'Empat tahap pembentukan biogas adalah hidrolisis, asidogenesis, asetogenesis, dan terakhir metanogenesis (pembentukan metana).'
+                    },
+                    {
+                        q: 'Perbandingan campuran kotoran ternak segar dengan air yang ideal saat dimasukkan ke bak pencampur biodigester umumnya adalah...',
+                        options: ['1 : 1', '1 : 50', '50 : 1', '1 : 100', 'Tanpa air sama sekali'],
+                        answer: 0,
+                        exp: 'Perbandingan 1 bagian kotoran ternak dengan 1 bagian air menghasilkan kekentalan substrat (slurry) yang optimal untuk aktivitas bakteri.'
+                    },
+                    {
+                        q: 'Konsep ekonomi sirkular yang terwujud di Desa Makmur melalui instalasi PLTBg adalah...',
+                        options: ['Limbah peternakan & pasar diolah menjadi listrik dan pupuk organik untuk kembali mendukung pertanian & peternakan', 'Mengimpor batu bara dari luar pulau untuk membakar sampah', 'Membuang seluruh limbah ke sungai agar terbawa ke laut', 'Menebang hutan untuk dijadikan lahan parkir truk', 'Menggunakan genset solar 24 jam tanpa henti'],
+                        answer: 0,
+                        exp: 'Ekonomi sirkular menutup siklus limbah: ternak menghasilkan kotoran → biogas jadi listrik & pupuk → pupuk menyuburkan pakan ternak.'
+                    }
+                ]
+            },
+            {
+                id: 'kawah',
+                name: 'Desa Kawah',
+                plantName: 'PLTP (Pembangkit Listrik Tenaga Panas Bumi)',
+                pos: { x: 24, z: -14 },
+                color: 0xf97316,
+                powerOutput: '120,0 kW',
+                homesLit: '300 Rumah',
+                concept: 'PLTP memanfaatkan energi panas alami (geotermal) yang tersimpan di dalam batuan dan reservoir air panas bumi di lereng gunung berapi. Uap panas bumi bertekanan tinggi dialirkan melalui sumur produksi untuk memutar turbin uap dan generator, lalu uap dikondensasikan dan diinjeksikan kembali ke dalam bumi.',
+                formula: 'P = ṁ × (h₁ - h₂) × η_turbin × η_gen',
+                formulaDesc: 'ṁ = Laju aliran massa uap (kg/s), h₁ = Entalpi uap masuk turbin (kJ/kg), h₂ = Entalpi uap keluar turbin (kJ/kg), η = Efisiensi mekanik & elektrik.',
+                components: [
+                    'Sumur Produksi & Separator (mengekstrak uap panas bumi dan memisahkan fase air)',
+                    'Turbin Uap Bertekanan Tinggi (mengubah energi termal uap menjadi energi mekanik)',
+                    'Generator & Transformator (menghasilkan dan menaikkan tegangan listrik AC)',
+                    'Kondensor, Cooling Tower & Sumur Reinjeksi (mengembalikan air ke reservoir bumi)'
+                ],
+                impact: 'Terletak di kaki gunung berapi aktif sisi timur laut, Desa Kawah memiliki cadangan panas bumi yang stabil 24 jam tanpa terpengaruh cuaca. Sistem reinjeksi menjaga kelestarian reservoir geotermal.',
+                assemblyOrder: [
+                    { id: 'well', label: 'Sumur Produksi & Separator Uap', desc: 'Memisahkan uap kering panas bumi dari air' },
+                    { id: 'steamturb', label: 'Turbin Uap Panas Bumi', desc: 'Mengubah energi termal uap menjadi putaran' },
+                    { id: 'geo_gen', label: 'Generator Listrik Sinkron', desc: 'Mengubah putaran turbin menjadi daya listrik' },
+                    { id: 'reinject', label: 'Kondensor & Sumur Reinjeksi', desc: 'Mengembalikan air kondensat ke perut bumi' }
+                ],
+                questions: [
+                    {
+                        q: 'Sumber utama energi panas pada PLTP di Desa Kawah berasal dari...',
+                        options: ['Pembakaran kayu bakar hutan gunung', 'Aktivitas magmatik dan gradien geotermal di dalam kerak bumi', 'Pantulan cahaya matahari dari puncak gunung', 'Gesekan angin gunung dengan bebatuan', 'Reaksi kimia pupuk pertanian'],
+                        answer: 1,
+                        exp: 'Energi geotermal berasal dari panas inti bumi dan kantong magma yang memanaskan air tanah dalam reservoir batuan berpori.'
+                    },
+                    {
+                        q: 'Fungsi alat Separator pada kepala sumur produksi PLTP adalah...',
+                        options: ['Mencampur uap panas dengan minyak bumi', 'Memisahkan uap kering (dry steam) dari titik-titik air (brine) agar sudu turbin tidak terkikis', 'Mendinginkan uap hingga membeku menjadi es', 'Menyerap gas oksigen dari atmosfer', 'Mengubah listrik AC menjadi DC'],
+                        answer: 1,
+                        exp: 'Butiran air berkecepatan tinggi dapat menyebabkan erosi/korosi pada sudu turbin uap, sehingga separator memisahkan fase uap dan cair.'
+                    },
+                    {
+                        q: 'Mengapa air hasil kondensasi uap di PLTP harus dimasukkan kembali ke dalam perut bumi melalui Sumur Reinjeksi?',
+                        options: ['Agar gunung berapi segera meletus', 'Menjaga tekanan dan keberlanjutan cadangan air reservoir panas bumi serta mencegah pencemaran permukaan', 'Supaya sungai di bawah gunung menjadi kering', 'Untuk memadamkan magma di inti bumi', 'Agar turbin berhenti berputar'],
+                        answer: 1,
+                        exp: 'Reinjeksi menjaga keseimbangan massa fluida di dalam reservoir geotermal sehingga pembangkit tetap berkelanjutan (renewable).'
+                    },
+                    {
+                        q: 'Keunggulan strategis PLTP sebagai pembangkit beban dasar (base load) dibandingkan PLTS dan PLTB adalah...',
+                        options: ['Dapat beroperasi stabil 24 jam sehari tanpa bergantung pada cuaca maupun siang/malam', 'Biaya pengeboran sumur lebih murah daripada membeli baterai senter', 'Bisa dipasang di atas atap rumah warga', 'Tidak memerlukan turbin maupun generator', 'Menghasilkan abu batu bara untuk bahan bangunan'],
+                        answer: 0,
+                        exp: 'Panas bumi tersedia terus-menerus 24 jam sepanjang tahun dengan faktor kapasitas (capacity factor) tertinggi (>90%) di antara energi terbarukan.'
+                    },
+                    {
+                        q: 'Asap putih tebal yang keluar dari menara pendingin (cooling tower) PLTP pada dasarnya adalah...',
+                        options: ['Asap hitam pembakaran batu bara', 'Uap air bersih (H₂O) hasil proses pendinginan kondensor', 'Gas karbon monoksida beracun', 'Debu vulkanik letusan gunung', 'Gas metana murni'],
+                        answer: 1,
+                        exp: 'Gumpalan putih dari cooling tower adalah uap air murni dari sirkulasi air pendingin, bukan asap pembakaran fosil.'
+                    },
+                    {
+                        q: 'Urutan transformasi energi yang berlangsung pada sistem PLTP Desa Kawah adalah...',
+                        options: ['Kimia → Cahaya → Listrik', 'Termal (Panas Bumi) → Kinetik Uap → Mekanik Turbin → Listrik', 'Potensial Air → Kinetik → Listrik', 'Cahaya → Termal → Kimia → Listrik', 'Mekanik → Termal → Potensial'],
+                        answer: 1,
+                        exp: 'Energi termal fluida geotermal menggerakkan turbin uap (mekanik) yang terhubung ke generator listrik.'
+                    },
+                    {
+                        q: 'Indonesia memiliki sekitar 40% cadangan energi panas bumi dunia karena letak geografisnya berada pada jalur...',
+                        options: ['Lingkaran Arktik Utara', 'Cincin Api Pasifik (Pacific Ring of Fire)', 'Gurun Subtropis', 'Lempeng Stabil Eropa', 'Kutub Selatan'],
+                        answer: 1,
+                        exp: 'Indonesia terletak di pertemuan lempeng tektonik aktif (Pacific Ring of Fire) yang membentuk banyak gunung berapi dan sistem hidrotermal.'
+                    },
+                    {
+                        q: 'Gas non-kondensabel yang sering ikut keluar bersama uap panas bumi dan wajib dikendalikan kadarnya demi keselamatan pekerja PLTP adalah...',
+                        options: ['Hidrogen Sulfida (H₂S)', 'Helium (He)', 'Neon (Ne)', 'Ozon (O₃)', 'Argon (Ar)'],
+                        answer: 0,
+                        exp: 'Gas H₂S berbau telur busuk dapat muncul dalam konsentrasi kecil pada fluida geotermal sehingga dipantau ketat oleh sensor keselamatan K3.'
+                    },
+                    {
+                        q: 'Alat yang berfungsi mengubah uap bekas keluaran turbin kembali menjadi fase air cair agar tercipta vakum dan efisiensi turbin meningkat adalah...',
+                        options: ['Kondensor', 'Inverter', 'Biodigester', 'Anemometer', 'Solar Charge Controller'],
+                        answer: 0,
+                        exp: 'Kondensor mengembunkan uap keluar turbin menjadi air kondensat sehingga menurunkan tekanan balik dan memaksimalkan kerja turbin.'
+                    },
+                    {
+                        q: 'Selain untuk pembangkit listrik (pemanfaatan tidak langsung), energi panas bumi bersuhu menengah di Desa Kawah dapat dimanfaatkan secara langsung (direct use) untuk...',
+                        options: ['Pengeringan hasil pertanian (kopi/teh), budidaya jamur, dan pemandian air hangat wisata', 'Bahan baku pembuatan plastik', 'Pendingin es batu tanpa listrik', 'Pengganti solar pada sepeda motor', 'Bahan peledak tambang'],
+                        answer: 0,
+                        exp: 'Direct use geotermal memanfaatkan panas langsung untuk agribisnis (pengeringan komoditas), akuakultur, dan pariwisata pemandian air panas.'
+                    }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 3. DATA 10 WARGA DESA INTERAKTIF (NPC)
+        // ==========================================
+        const VILLAGER_NPCS = [
+            {
+                id: 'npc_camat',
+                name: 'Pak Camat Hendra',
+                role: 'Camat Kecamatan Harapan (Balai Pusat)',
+                pos: { x: -2.2, z: 4.5 },
+                shirtColor: 0x927248,
+                pantsColor: 0x785c37,
+                avatar: '👨‍💼',
+                potential: 'Koordinasi 5 Desa Energi Terbarukan',
+                speech: 'Selamat datang di Kecamatan Harapan! Kelima desa kita masih kekurangan pasokan listrik bersih. Kunjungi Desa Surya, Tirta, Bayu, Makmur, dan Kawah—rakit pembangkitnya dan buktikan aliran listriknya!'
+            },
+            {
+                id: 'npc_surya_1',
+                name: 'Pak Darman',
+                role: 'Petani Sabana • Desa Surya',
+                pos: { x: -23.0, z: 10.5 },
+                shirtColor: 0xf59e0b,
+                pantsColor: 0x334155,
+                avatar: '🧑‍🌾',
+                potential: 'Potensi Utama: Energi Surya (PLTS)',
+                speech: 'Matahari di lembah Desa Surya bersinar terik dari pagi sampai sore tanpa terhalang bukit. Kalau panel surya dipasang di lahan terbuka itu, pompa irigasi dan rumah warga pasti terang benderang!'
+            },
+            {
+                id: 'npc_surya_2',
+                name: 'Bu Ratna',
+                role: 'Kader Posyandu • Desa Surya',
+                pos: { x: -28.5, z: 14.2 },
+                shirtColor: 0xfbbf24,
+                pantsColor: 0x1e293b,
+                avatar: '👩',
+                potential: 'Potensi Utama: Penyimpanan Baterai PLTS',
+                speech: 'Puskesmas pembantu di desa kami butuh listrik stabil di malam hari untuk lemari pendingin vaksin. Pastikan rangkaian PLTS memakai baterai dan inverter ya!'
+            },
+            {
+                id: 'npc_tirta_1',
+                name: 'Pak Slamet',
+                role: 'Penjaga Pintu Air • Desa Tirta',
+                pos: { x: 22.5, z: 16.5 },
+                shirtColor: 0x0284c7,
+                pantsColor: 0x1e3a8a,
+                avatar: '🧔',
+                potential: 'Potensi Utama: Energi Air Mikrohidro (PLTMH)',
+                speech: 'Aliran sungai di Desa Tirta deras sepanjang tahun dan punya terjunan air alami setinggi 12 meter. Sangat cocok untuk memutar turbin mikrohidro 24 jam nonstop!'
+            },
+            {
+                id: 'npc_tirta_2',
+                name: 'Mas Bagas',
+                role: 'Pemuda Karang Taruna • Desa Tirta',
+                pos: { x: 27.5, z: 20.5 },
+                shirtColor: 0x38bdf8,
+                pantsColor: 0x0f172a,
+                avatar: '🧑',
+                potential: 'Potensi Utama: Konservasi Hulu Sungai',
+                speech: 'Kami rutin menanam pohon di tebing hulu sungai supaya air tetap jernih dan debitnya stabil saat musim kemarau untuk menggerakkan kincir PLTMH.'
+            },
+            {
+                id: 'npc_bayu_1',
+                name: 'Mbah Karso',
+                role: 'Penggembala Bukit • Desa Bayu',
+                pos: { x: -13.5, z: -23.0 },
+                shirtColor: 0x0d9488,
+                pantsColor: 0x334155,
+                avatar: '👴',
+                potential: 'Potensi Utama: Energi Angin (PLTB)',
+                speech: 'Setiap hari angin bukit utara bertiup kencang melewati celah lembah ini. Turbin angin tinggi di atas bukit pasti sanggup memasok listrik puluhan rumah!'
+            },
+            {
+                id: 'npc_bayu_2',
+                name: 'Mbak Sari',
+                role: 'Pengrajin Tenun • Desa Bayu',
+                pos: { x: -18.5, z: -27.0 },
+                shirtColor: 0x2dd4bf,
+                pantsColor: 0x1e293b,
+                avatar: '👩‍🎨',
+                potential: 'Potensi Utama: Listrik Bengkel UMKM Desa',
+                speech: 'Kalau listrik dari PLTB sudah menyala, alat tenun semi-otomatis dan lampu bengkel kerajinan kami bisa beroperasi sampai malam.'
+            },
+            {
+                id: 'npc_makmur_1',
+                name: 'Pak Haji Rohman',
+                role: 'Peternak Sapi Perah • Desa Makmur',
+                pos: { x: 4.5, z: 23.5 },
+                shirtColor: 0x65a30d,
+                pantsColor: 0x365314,
+                avatar: '🤠',
+                potential: 'Potensi Utama: Energi Biogas (PLTBg)',
+                speech: 'Kandang sapi di Desa Makmur menghasilkan ratusan kilogram kotoran ternak setiap hari. Kalau masuk kubah biodigester, gas metananya jadi listrik dan ampasnya jadi pupuk subur!'
+            },
+            {
+                id: 'npc_makmur_2',
+                name: 'Bu Wati',
+                role: 'Pedagang Pasar Rakyat • Desa Makmur',
+                pos: { x: 9.8, z: 27.0 },
+                shirtColor: 0x84cc16,
+                pantsColor: 0x1e293b,
+                avatar: '👩‍🍳',
+                potential: 'Potensi Utama: Pengolahan Sampah Organik Pasar',
+                speech: 'Sisa sayuran dan buah dari pasar desa sekarang tidak lagi menumpuk bau, karena bisa dicampur ke biodigester untuk menghasilkan gas metana!'
+            },
+            {
+                id: 'npc_kawah_1',
+                name: 'Pak Irwan',
+                role: 'Teknisi Geotermal • Desa Kawah',
+                pos: { x: 21.5, z: -12.5 },
+                shirtColor: 0xea580c,
+                pantsColor: 0x431407,
+                avatar: '👷',
+                potential: 'Potensi Utama: Energi Panas Bumi (PLTP)',
+                speech: 'Di lereng gunung berapi Desa Kawah terdapat uap panas bumi bertekanan tinggi. Dengan turbin uap dan sumur reinjeksi, kita bisa menghasilkan daya listrik terbesar di kecamatan ini!'
+            }
+        ];
+
+        // ==========================================
+        // 4. LOGIKA LOGIN, NAVIGASI & STATE MISI
+        // ==========================================
+        let currentVillage = null;
+        let selectedAssembly = [];
+        let shuffledPoolOrder = [];
+        let quizIndex = 0;
+        let quizCorrectCount = 0;
+        let quizAnswered = false;
+        let activeNpc = null;
+
+        function handleStartSubmit(e) {
+            e.preventDefault();
+            const nameVal = document.getElementById('studentName').value.trim();
+            const classVal = document.getElementById('studentClass').value.trim();
+            const absenVal = document.getElementById('studentAbsen').value.trim();
+            const errBox = document.getElementById('loginErrorMsg');
+
+            if (!nameVal || !classVal || !absenVal) {
+                errBox.textContent = 'Mohon lengkapi Nama Lengkap, Kelas, dan Nomor Absen terlebih dahulu.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            errBox.classList.add('hidden');
+            gameState.studentName = nameVal;
+            gameState.studentClass = classVal;
+            gameState.studentAbsen = absenVal;
+            gameState.inGame = true;
+
+            document.getElementById('hudPlayerName').textContent = `${nameVal} (${classVal} • No.${absenVal})`;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+
+            // Putar musik in-game secara sinkron dalam event user gesture
+            const bgmOpening = document.getElementById('bgmOpening');
+            const bgmIngame = document.getElementById('bgmIngame');
+            if (bgmOpening) bgmOpening.pause();
+            if (bgmIngame && gameState.musicEnabled) {
+                bgmIngame.currentTime = 0;
+                bgmIngame.volume = 0.6;
+                bgmIngame.play().catch(() => {});
+            }
+
+            if (!renderer) {
+                init3D();
+            } else {
+                onWindowResize();
+            }
+        }
+
+        function backToStartScreen() {
+            gameState.inGame = false;
+            document.getElementById('game-ui').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            syncBackgroundMusic();
+        }
+
+        function updateHUD() {
+            const doneCount = Object.keys(gameState.completedVillages).length;
+            const totalScore = Object.values(gameState.scores).reduce((a, b) => a + b, 0);
+            document.getElementById('hudProgress').textContent = `Desa: ${doneCount}/5`;
+            document.getElementById('hudScore').textContent = `Skor: ${totalScore}`;
+
+            VILLAGES_DATA.forEach(v => {
+                const navBtn = document.getElementById(`nav-${v.id}`);
+                if (navBtn && gameState.completedVillages[v.id]) {
+                    navBtn.classList.add('ring-2', 'ring-emerald-400');
+                }
+            });
+        }
+
+        function teleportTo(x, z) {
+            if (!playerGroup) return;
+            playerGroup.position.set(x, 0, z);
+            closeNpcDialog();
+        }
+
+        function openNpcDialog(npc) {
+            activeNpc = npc;
+            document.getElementById('npcAvatar').textContent = npc.avatar;
+            document.getElementById('npcName').textContent = npc.name;
+            document.getElementById('npcRole').textContent = npc.role;
+            document.getElementById('npcSpeech').textContent = `"${npc.speech}"`;
+            document.getElementById('npcPotentialTag').textContent = `💡 ${npc.potential}`;
+            document.getElementById('npc-dialog-box').classList.remove('hidden');
+        }
+
+        function closeNpcDialog() {
+            activeNpc = null;
+            document.getElementById('npc-dialog-box').classList.add('hidden');
+        }
+
+        // ==========================================
+        // 5. MODAL MISI: MATERI -> PERAKITAN -> BUKTI LISTRIK -> KUIS
+        // ==========================================
+        function openMissionModal(villageId) {
+            const v = VILLAGES_DATA.find(item => item.id === villageId);
+            if (!v) return;
+            currentVillage = v;
+
+            document.getElementById('modalVillageTag').textContent = `${v.name.toUpperCase()} • ${v.id.toUpperCase()}`;
+            document.getElementById('modalTitle').textContent = v.plantName;
+
+            // Isi Tahap 1: Materi IPAS
+            document.getElementById('matConcept').textContent = v.concept;
+            document.getElementById('matFormula').textContent = v.formula;
+            document.getElementById('matFormulaDesc').textContent = v.formulaDesc;
+            document.getElementById('matImpact').textContent = v.impact;
+
+            const compList = document.getElementById('matComponents');
+            compList.innerHTML = '';
+            v.components.forEach(c => {
+                const li = document.createElement('li');
+                li.textContent = c;
+                compList.appendChild(li);
+            });
+
+            showMaterialStage();
+            document.getElementById('mission-modal').classList.remove('hidden');
+        }
+
+        function closeMissionModal() {
+            document.getElementById('mission-modal').classList.add('hidden');
+        }
+
+        function setModalStageUI(stageNum) {
+            document.getElementById('stage-material').classList.toggle('hidden', stageNum !== 1);
+            document.getElementById('stage-assembly').classList.toggle('hidden', stageNum !== 2);
+            document.getElementById('stage-quiz').classList.toggle('hidden', stageNum !== 3);
+
+            [1, 2, 3].forEach(n => {
+                const tab = document.getElementById(`stepTab${n}`);
+                if (n === stageNum) {
+                    tab.className = 'py-1.5 px-2 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                } else if (n < stageNum) {
+                    tab.className = 'py-1.5 px-2 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/30';
+                } else {
+                    tab.className = 'py-1.5 px-2 rounded-lg bg-slate-800 text-slate-400';
+                }
+            });
+        }
+
+        function showMaterialStage() {
+            setModalStageUI(1);
+        }
+
+        function goToAssemblyStage() {
+            setModalStageUI(2);
+            const alreadyAssembled = !!gameState.assembledVillages[currentVillage.id];
+
+            if (alreadyAssembled) {
+                selectedAssembly = currentVillage.assemblyOrder.map(item => item.id);
+                renderAssemblyUI();
+                showElectricityProofPanel();
+            } else {
+                resetAssemblySlots();
+            }
+        }
+
+        function resetAssemblySlots() {
+            selectedAssembly = [];
+            // Acak urutan komponen setiap kali mulai merakit agar siswa benar-benar menganalisis alur energi
+            shuffledPoolOrder = [...currentVillage.assemblyOrder].sort(() => Math.random() - 0.5);
+            document.getElementById('assemblyFeedback').classList.add('hidden');
+            document.getElementById('builderProofBox').classList.add('hidden');
+            document.getElementById('assemblyControls').classList.remove('hidden');
+            renderAssemblyUI();
+        }
+
+        function renderAssemblyUI() {
+            const slotsContainer = document.getElementById('assemblySlots');
+            const poolContainer = document.getElementById('assemblyPool');
+            slotsContainer.innerHTML = '';
+            poolContainer.innerHTML = '';
+
+            for (let i = 0; i < 4; i++) {
+                const compId = selectedAssembly[i];
+                const compObj = currentVillage.assemblyOrder.find(c => c.id === compId);
+                const slotDiv = document.createElement('div');
+                slotDiv.className = compObj
+                    ? 'p-3 rounded-xl bg-emerald-500/20 border border-emerald-400 text-left'
+                    : 'p-3 rounded-xl bg-slate-900/70 border border-dashed border-slate-700 text-center flex flex-col items-center justify-center min-h-[76px]';
+
+                if (compObj) {
+                    slotDiv.innerHTML = `
+                        <div class="text-[10px] font-bold text-emerald-300">Urutan ${i + 1}</div>
+                        <div class="text-xs font-extrabold text-white mt-0.5">${compObj.label}</div>
+                    `;
+                } else {
+                    slotDiv.innerHTML = `<span class="text-xs font-bold text-slate-500">Slot ${i + 1}</span>`;
+                }
+                slotsContainer.appendChild(slotDiv);
+            }
+
+            const poolList = shuffledPoolOrder.length === 4 ? shuffledPoolOrder : currentVillage.assemblyOrder;
+            poolList.forEach(item => {
+                const isUsed = selectedAssembly.includes(item.id);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.disabled = isUsed || selectedAssembly.length >= 4;
+                btn.className = isUsed
+                    ? 'p-3 rounded-xl bg-slate-900/40 border border-slate-800 text-left opacity-40 cursor-not-allowed'
+                    : 'p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left transition cursor-pointer';
+                btn.innerHTML = `
+                    <div class="text-xs font-extrabold text-amber-300">${item.label}</div>
+                    <div class="text-[11px] text-slate-300 mt-0.5">${item.desc}</div>
+                `;
+                btn.onclick = () => {
+                    if (selectedAssembly.length < 4 && !selectedAssembly.includes(item.id)) {
+                        selectedAssembly.push(item.id);
+                        renderAssemblyUI();
+                    }
+                };
+                poolContainer.appendChild(btn);
+            });
+        }
+
+        function verifyCircuitAssembly() {
+            const fb = document.getElementById('assemblyFeedback');
+            if (selectedAssembly.length < 4) {
+                fb.textContent = '⚠️ Silakan pasang ke-4 komponen pembangkit listrik ke dalam slot terlebih dahulu!';
+                fb.className = 'p-3 rounded-xl text-xs sm:text-sm font-semibold bg-amber-950/80 border border-amber-500/40 text-amber-200';
+                fb.classList.remove('hidden');
+                return;
+            }
+
+            const isCorrect = currentVillage.assemblyOrder.every((item, idx) => selectedAssembly[idx] === item.id);
+            if (!isCorrect) {
+                fb.textContent = '❌ Urutan aliran energi belum tepat! Periksa kembali alur dari sumber energi alami menuju generator dan distribusi.';
+                fb.className = 'p-3 rounded-xl text-xs sm:text-sm font-semibold bg-rose-950/80 border border-rose-500/40 text-rose-200';
+                fb.classList.remove('hidden');
+                return;
+            }
+
+            // Perakitan berhasil -> munculkan pembangkit 3D + aliran listrik + panel bukti telemetri!
+            fb.classList.add('hidden');
+            gameState.assembledVillages[currentVillage.id] = true;
+            activateVillage3DPowerPlant(currentVillage.id);
+            showElectricityProofPanel();
+        }
+
+        function showElectricityProofPanel() {
+            document.getElementById('proofPowerVal').textContent = currentVillage.powerOutput;
+            document.getElementById('proofHomesVal').textContent = currentVillage.homesLit;
+            document.getElementById('builderProofBox').classList.remove('hidden');
+            document.getElementById('assemblyControls').classList.add('hidden');
+        }
+
+        function inspect3DPowerPlant() {
+            closeMissionModal();
+            if (playerGroup && currentVillage) {
+                playerGroup.position.set(currentVillage.pos.x, 0, currentVillage.pos.z + 4.8);
+                playerGroup.rotation.y = Math.PI;
+            }
+        }
+
+        // ==========================================
+        // 6. TAHAP 3: KUIS 10 SOAL PILIHAN GANDA (A-E)
+        // ==========================================
+        function startQuizStage() {
+            setModalStageUI(3);
+            quizIndex = 0;
+            quizCorrectCount = 0;
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            quizAnswered = false;
+            const qObj = currentVillage.questions[quizIndex];
+            document.getElementById('quizCounter').textContent = `Soal ${quizIndex + 1} dari ${currentVillage.questions.length}`;
+            document.getElementById('quizQuestionText').textContent = qObj.q;
+
+            const expBox = document.getElementById('quizExplanationBox');
+            expBox.classList.add('hidden');
+
+            const nextBtn = document.getElementById('quizNextBtn');
+            nextBtn.classList.add('hidden');
+            nextBtn.textContent = quizIndex === currentVillage.questions.length - 1 ? 'Selesaikan Misi Desa ✓' : 'Soal Berikutnya →';
+
+            const optContainer = document.getElementById('quizOptionsContainer');
+            optContainer.innerHTML = '';
+
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            qObj.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full p-3 sm:p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left flex items-start gap-3 transition cursor-pointer';
+                btn.innerHTML = `
+                    <span class="w-7 h-7 shrink-0 rounded-lg bg-slate-800 border border-slate-600 flex items-center justify-center text-xs font-extrabold text-emerald-300">
+                        ${letters[idx]}
+                    </span>
+                    <span class="text-xs sm:text-sm text-slate-100 leading-snug pt-0.5">${optText}</span>
+                `;
+                btn.onclick = () => selectQuizAnswer(idx, btn);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizAnswer(selectedIdx, clickedBtn) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const qObj = currentVillage.questions[quizIndex];
+            const buttons = document.getElementById('quizOptionsContainer').querySelectorAll('button');
+            const isRight = selectedIdx === qObj.answer;
+
+            if (isRight) {
+                quizCorrectCount++;
+            }
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === qObj.answer) {
+                    btn.className = 'w-full p-3 sm:p-3.5 rounded-xl bg-emerald-950/90 border-2 border-emerald-400 text-left flex items-start gap-3';
+                } else if (idx === selectedIdx && !isRight) {
+                    btn.className = 'w-full p-3 sm:p-3.5 rounded-xl bg-rose-950/90 border-2 border-rose-400 text-left flex items-start gap-3';
+                } else {
+                    btn.className = 'w-full p-3 sm:p-3.5 rounded-xl bg-slate-900/50 border border-slate-800 text-left flex items-start gap-3 opacity-55';
+                }
+            });
+
+            const expBox = document.getElementById('quizExplanationBox');
+            expBox.innerHTML = `<b>${isRight ? '✅ Jawaban Benar!' : '❌ Kurang Tepat.'}</b> ${qObj.exp}`;
+            expBox.classList.remove('hidden');
+
+            document.getElementById('quizNextBtn').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            if (quizIndex < currentVillage.questions.length - 1) {
+                quizIndex++;
+                renderQuizQuestion();
+            } else {
+                const earnedScore = quizCorrectCount * 10;
+                gameState.scores[currentVillage.id] = Math.max(gameState.scores[currentVillage.id], earnedScore);
+                gameState.completedVillages[currentVillage.id] = true;
+                updateHUD();
+                closeMissionModal();
+                openReportModal();
+                submitScoreToGoogleSheet(false);
+            }
+        }
+
+        // ==========================================
+        // 7. LAPORAN HASIL BELAJAR & INTEGRASI GOOGLE SPREADSHEET TERKUNCI
+        // ==========================================
+        function openReportModal() {
+            document.getElementById('repName').textContent = `${gameState.studentName} (Absen ${gameState.studentAbsen})`;
+            document.getElementById('repClass').textContent = gameState.studentClass;
+
+            const doneCount = Object.keys(gameState.completedVillages).length;
+            const totalScore = Object.values(gameState.scores).reduce((a, b) => a + b, 0);
+            document.getElementById('repCompleted').textContent = `${doneCount} / 5 Desa Selesai`;
+            document.getElementById('repTotalScore').textContent = `${totalScore} / 500 Poin`;
+
+            // Sembunyikan panel pengaturan link guru jika mode siswa terkunci aktif
+            const teacherSection = document.getElementById('teacherSheetConfigSection');
+            if (teacherSection) {
+                teacherSection.classList.toggle('hidden', isStudentLockedMode());
+            }
+
+            const savedWebhook = getActiveSheetWebhook();
+            const statusEl = document.getElementById('sheetSyncStatus');
+            if (statusEl) {
+                statusEl.textContent = savedWebhook ? '🟢 Terhubung ke Sheet Guru' : '⚪ Belum Dikonfigurasi';
+                statusEl.className = savedWebhook ? 'text-[11px] font-bold text-emerald-400' : 'text-[11px] font-bold text-slate-400';
+            }
+
+            const breakdown = document.getElementById('repVillageBreakdown');
+            breakdown.innerHTML = '';
+
+            VILLAGES_DATA.forEach(v => {
+                const isDone = !!gameState.completedVillages[v.id];
+                const isBuilt = !!gameState.assembledVillages[v.id];
+                const sc = gameState.scores[v.id];
+                const row = document.createElement('div');
+                row.className = 'p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs';
+                row.innerHTML = `
+                    <div>
+                        <div class="font-bold text-white">${v.name} — ${v.plantName.split(' ')[0]}</div>
+                        <div class="text-[11px] ${isDone ? 'text-emerald-400' : isBuilt ? 'text-amber-300' : 'text-slate-400'}">
+                            ${isDone ? '✅ Terakit & Kuis Lulus' : isBuilt ? '⚡ Terakit (Belum Kuis)' : '⏳ Belum Dikerjakan'}
+                        </div>
+                    </div>
+                    <div class="font-extrabold text-amber-300 text-sm">${sc} Poin</div>
+                `;
+                breakdown.appendChild(row);
+            });
+
+            document.getElementById('copyFeedback').classList.add('hidden');
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function toggleTeacherPanel() {
+            const body = document.getElementById('teacherPanelBody');
+            if (!body) return;
+            body.classList.toggle('hidden');
+            const input = document.getElementById('teacherWebhookInput');
+            if (input && !input.value) {
+                input.value = localStorage.getItem('harapan_sheet_webhook') || '';
+            }
+        }
+
+        function saveAndCopyLockedStudentLink() {
+            const input = document.getElementById('teacherWebhookInput');
+            const notice = document.getElementById('teacherCopyNotice');
+            const rawUrl = (input ? input.value : '').trim();
+
+            if (!rawUrl || !rawUrl.startsWith('http')) {
+                notice.textContent = '⚠️ Masukkan URL Web App Google Apps Script yang valid terlebih dahulu!';
+                notice.className = 'text-[11px] text-rose-300 font-semibold';
+                notice.classList.remove('hidden');
+                return;
+            }
+
+            localStorage.setItem('harapan_sheet_webhook', rawUrl);
+            const baseUrl = window.location.href.split('?')[0];
+            const lockedUrl = `${baseUrl}?sheet=${encodeURIComponent(btoa(rawUrl))}`;
+
+            const ta = document.createElement('textarea');
+            ta.value = lockedUrl;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            notice.textContent = '✅ Link Game Terkunci berhasil disalin! Bagikan link ini ke siswa (siswa tidak bisa mengubah spreadsheet).';
+            notice.className = 'text-[11px] text-emerald-300 font-semibold';
+            notice.classList.remove('hidden');
+        }
+
+        function copyAppsScriptCode() {
+            const notice = document.getElementById('teacherCopyNotice');
+            const macroCode = [
+                'function doPost(e) {',
+                '  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();',
+                '  if (sheet.getLastRow() === 0) {',
+                '    sheet.appendRow(["Waktu", "Nama Siswa", "Kelas", "No Absen", "Desa Selesai", "PLTS Surya", "PLTMH Tirta", "PLTB Bayu", "PLTBg Makmur", "PLTP Kawah", "Total Skor"]);',
+                '  }',
+                '  var d = JSON.parse(e.postData.contents);',
+                '  sheet.appendRow([new Date(), d.nama, d.kelas, d.absen, d.desaSelesai, d.surya, d.tirta, d.bayu, d.makmur, d.kawah, d.totalSkor]);',
+                '  return ContentService.createTextOutput(JSON.stringify({status: "ok"})).setMimeType(ContentService.MimeType.JSON);',
+                '}'
+            ].join('\n');
+
+            const ta = document.createElement('textarea');
+            ta.value = macroCode;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            notice.textContent = '✅ Kode Google Apps Script disalin! Tempel di Ekstensi > Apps Script lalu Deploy sebagai Web App (Who has access: Anyone).';
+            notice.className = 'text-[11px] text-sky-300 font-semibold';
+            notice.classList.remove('hidden');
+        }
+
+        function submitScoreToGoogleSheet(isManualClick = false) {
+            const webhookUrl = getActiveSheetWebhook();
+            const statusEl = document.getElementById('sheetSyncStatus');
+
+            if (!webhookUrl) {
+                if (isManualClick && statusEl) {
+                    statusEl.textContent = '⚠️ Link Spreadsheet belum diatur guru';
+                    statusEl.className = 'text-[11px] font-bold text-amber-300';
+                }
+                return;
+            }
+
+            const doneCount = Object.keys(gameState.completedVillages).length;
+            const totalScore = Object.values(gameState.scores).reduce((a, b) => a + b, 0);
+            const payload = {
+                nama: gameState.studentName,
+                kelas: gameState.studentClass,
+                absen: gameState.studentAbsen,
+                desaSelesai: `${doneCount}/5`,
+                surya: gameState.scores.surya,
+                tirta: gameState.scores.tirta,
+                bayu: gameState.scores.bayu,
+                makmur: gameState.scores.makmur,
+                kawah: gameState.scores.kawah,
+                totalSkor: totalScore
+            };
+
+            if (statusEl) {
+                statusEl.textContent = '⏳ Mengirim nilai...';
+                statusEl.className = 'text-[11px] font-bold text-amber-300';
+            }
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                if (statusEl) {
+                    statusEl.textContent = '✅ Nilai Terkirim ke Spreadsheet!';
+                    statusEl.className = 'text-[11px] font-bold text-emerald-400';
+                }
+            })
+            .catch(() => {
+                if (statusEl) {
+                    statusEl.textContent = '❌ Gagal kirim, coba klik Kirim lagi';
+                    statusEl.className = 'text-[11px] font-bold text-rose-400';
+                }
+            });
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.add('hidden');
+        }
+
+        function copyReportSummary() {
+            const doneCount = Object.keys(gameState.completedVillages).length;
+            const totalScore = Object.values(gameState.scores).reduce((a, b) => a + b, 0);
+            const summaryText = [
+                `REKAP EKSPEDISI ENERGI TERBARUKAN 3D`,
+                `Nama: ${gameState.studentName} | Kelas: ${gameState.studentClass} | Absen: ${gameState.studentAbsen}`,
+                `Desa Selesai: ${doneCount}/5 | Total Skor: ${totalScore}/500`,
+                `Surya (PLTS): ${gameState.scores.surya} | Tirta (PLTMH): ${gameState.scores.tirta} | Bayu (PLTB): ${gameState.scores.bayu} | Makmur (PLTBg): ${gameState.scores.makmur} | Kawah (PLTP): ${gameState.scores.kawah}`
+            ].join('\n');
+
+            const ta = document.createElement('textarea');
+            ta.value = summaryText;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            const fb = document.getElementById('copyFeedback');
+            if (fb) fb.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 8. DUNIA 3D THREE.JS (JALAN REALISTIS, KARAKTER BERJALAN, 5 PEMBANGKIT & BUKTI LISTRIK)
+        // ==========================================
+        let scene, camera, renderer, playerGroup;
+        let cameraYaw = 0;
+        let cameraPitch = 0.42;
+        let cameraDistance = 12;
+        const keysPressed = { up: false, down: false, left: false, right: false };
+        const villageVisuals = {};
+        const animatedTurbines = [];
+        const electricPulses = [];
+        const npcInteractMeshes = [];
+
+        function createPersonMesh(shirtColor, pantsColor, hasHardhat = false) {
+            const root = new THREE.Group();
+            const skinMat = new THREE.MeshLambertMaterial({ color: 0xf1c27d });
+            const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor });
+            const pantsMat = new THREE.MeshLambertMaterial({ color: pantsColor });
+            const hairMat = new THREE.MeshLambertMaterial({ color: 0x1e1b18 });
+            const shoeMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+
+            // Pinggul (Pelvis)
+            const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.18, 0.18, 12), pantsMat);
+            pelvis.scale.set(1.15, 1, 0.85);
+            pelvis.position.y = 0.84;
+            root.add(pelvis);
+
+            // Badan Atas (Torso anatomis dengan bahu lebih bidang & pinggang proporsional)
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 0.56, 14), shirtMat);
+            torso.scale.set(1.18, 1, 0.78);
+            torso.position.y = 1.20;
+            torso.castShadow = true;
+            root.add(torso);
+
+            // Kerah Baju & Leher
+            const collar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.11, 0.13, 0.06, 12),
+                new THREE.MeshLambertMaterial({ color: 0xf8fafc })
+            );
+            collar.position.y = 1.49;
+            root.add(collar);
+
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.14, 12), skinMat);
+            neck.position.y = 1.56;
+            root.add(neck);
+
+            // Kepala Manusia Membulat + Fitur Wajah
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 1.76, 0);
+
+            const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.185, 16, 16), skinMat);
+            cranium.scale.set(0.92, 1.06, 0.96);
+            cranium.castShadow = true;
+            headGroup.add(cranium);
+
+            // Telinga Kiri & Kanan
+            [-0.17, 0.17].forEach(ex => {
+                const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), skinMat);
+                ear.scale.set(0.55, 1, 0.75);
+                ear.position.set(ex, -0.01, -0.01);
+                headGroup.add(ear);
+            });
+
+            // Mata, Alis, Hidung & Mulut (Menghadap +Z)
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+            const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            [-0.062, 0.062].forEach(ex => {
+                const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeWhiteMat);
+                eyeWhite.position.set(ex, 0.02, 0.165);
+                headGroup.add(eyeWhite);
+
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), eyeMat);
+                pupil.position.set(ex, 0.02, 0.182);
+                headGroup.add(pupil);
+
+                const brow = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.014, 0.015), hairMat);
+                brow.position.set(ex, 0.055, 0.172);
+                headGroup.add(brow);
+            });
+
+            const nose = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.055, 8), skinMat);
+            nose.rotation.x = Math.PI / 2;
+            nose.position.set(0, -0.015, 0.185);
+            headGroup.add(nose);
+
+            const mouth = new THREE.Mesh(
+                new THREE.BoxGeometry(0.065, 0.014, 0.012),
+                new THREE.MeshBasicMaterial({ color: 0x9f1239 })
+            );
+            mouth.position.set(0, -0.075, 0.17);
+            headGroup.add(mouth);
+
+            if (hasHardhat) {
+                // Helm Keselamatan Teknisi dengan Visor Depan
+                const helmetMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+                const dome = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.205, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.56),
+                    helmetMat
+                );
+                dome.position.y = 0.03;
+                headGroup.add(dome);
+
+                const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.022, 16), helmetMat);
+                brim.position.set(0, 0.035, 0.035);
+                headGroup.add(brim);
+            } else {
+                // Rambut Alami Warga Desa
+                const hairCap = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.194, 16, 14, 0, Math.PI * 2, 0, Math.PI * 0.62),
+                    hairMat
+                );
+                hairCap.scale.set(0.95, 1.06, 1.0);
+                hairCap.position.set(0, 0.02, -0.015);
+                headGroup.add(hairCap);
+            }
+            root.add(headGroup);
+
+            // Fungsi Pembantu Lengan Manusia (Bahu + Lengan Atas + Siku + Lengan Bawah + Telapak Tangan)
+            function buildArm(sideSign) {
+                const armPivot = new THREE.Group();
+                armPivot.position.set(sideSign * 0.30, 1.42, 0);
+
+                const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 10), shirtMat);
+                armPivot.add(shoulder);
+
+                const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.058, 0.27, 10), shirtMat);
+                upperArm.position.y = -0.14;
+                armPivot.add(upperArm);
+
+                const elbowPivot = new THREE.Group();
+                elbowPivot.position.set(0, -0.28, 0);
+
+                const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.25, 10), skinMat);
+                forearm.position.y = -0.125;
+                elbowPivot.add(forearm);
+
+                const hand = new THREE.Mesh(new THREE.SphereGeometry(0.052, 10, 10), skinMat);
+                hand.scale.set(0.85, 1.15, 0.65);
+                hand.position.y = -0.27;
+                elbowPivot.add(hand);
+
+                armPivot.add(elbowPivot);
+                return { armPivot, elbowPivot };
+            }
+
+            const leftArmObj = buildArm(-1);
+            const rightArmObj = buildArm(1);
+            root.add(leftArmObj.armPivot);
+            root.add(rightArmObj.armPivot);
+
+            // Fungsi Pembantu Kaki Manusia (Paha + Lutut + Betis + Sepatu)
+            function buildLeg(sideSign) {
+                const legPivot = new THREE.Group();
+                legPivot.position.set(sideSign * 0.115, 0.78, 0);
+
+                const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.092, 0.075, 0.38, 12), pantsMat);
+                thigh.position.y = -0.19;
+                legPivot.add(thigh);
+
+                const kneePivot = new THREE.Group();
+                kneePivot.position.set(0, -0.38, 0);
+
+                const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.058, 0.34, 12), pantsMat);
+                shin.position.y = -0.17;
+                kneePivot.add(shin);
+
+                // Sepatu lengkap dengan sol depan
+                const shoeHeel = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.08, 0.16), shoeMat);
+                shoeHeel.position.set(0, -0.36, 0.01);
+                kneePivot.add(shoeHeel);
+
+                const shoeToe = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), shoeMat);
+                shoeToe.scale.set(0.95, 0.62, 1.35);
+                shoeToe.position.set(0, -0.365, 0.09);
+                kneePivot.add(shoeToe);
+
+                legPivot.add(kneePivot);
+                return { legPivot, kneePivot };
+            }
+
+            const leftLegObj = buildLeg(-1);
+            const rightLegObj = buildLeg(1);
+            root.add(leftLegObj.legPivot);
+            root.add(rightLegObj.legPivot);
+
+            root.userData.limbs = {
+                headGroup,
+                leftArmPivot: leftArmObj.armPivot,
+                rightArmPivot: rightArmObj.armPivot,
+                leftElbowPivot: leftArmObj.elbowPivot,
+                rightElbowPivot: rightArmObj.elbowPivot,
+                leftLegPivot: leftLegObj.legPivot,
+                rightLegPivot: rightLegObj.legPivot,
+                leftKneePivot: leftLegObj.kneePivot,
+                rightKneePivot: rightLegObj.kneePivot
+            };
+            return root;
+        }
+
+        function createRoadStrip(x1, z1, x2, z2, width = 3.2) {
+            const dx = x2 - x1;
+            const dz = z2 - z1;
+            const len = Math.hypot(dx, dz);
+            const roadGroup = new THREE.Group();
+            roadGroup.position.set((x1 + x2) / 2, 0.02, (z1 + z2) / 2);
+            roadGroup.rotation.y = Math.atan2(dx, dz);
+
+            // Aspal utama
+            const asphalt = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, len),
+                new THREE.MeshLambertMaterial({ color: 0x334155 })
+            );
+            asphalt.rotation.x = -Math.PI / 2;
+            roadGroup.add(asphalt);
+
+            // Trotoar tepi kiri & kanan
+            [-width / 2 - 0.25, width / 2 + 0.25].forEach(offsetX => {
+                const curb = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.45, 0.08, len),
+                    new THREE.MeshLambertMaterial({ color: 0x94a3b8 })
+                );
+                curb.position.set(offsetX, 0.03, 0);
+                roadGroup.add(curb);
+            });
+
+            // Marka jalan putus-putus sejajar arah jalan
+            const dashCount = Math.floor(len / 2.6);
+            for (let i = 0; i < dashCount; i++) {
+                const dash = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.16, 1.2),
+                    new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+                );
+                dash.rotation.x = -Math.PI / 2;
+                dash.position.set(0, 0.015, -len / 2 + 1.3 + i * 2.6);
+                roadGroup.add(dash);
+            }
+
+            // Lampu jalan teratur di tepi trotoar
+            const lampCount = Math.max(1, Math.floor(len / 11));
+            for (let i = 1; i <= lampCount; i++) {
+                const zPos = -len / 2 + (len / (lampCount + 1)) * i;
+                const poleGroup = new THREE.Group();
+                poleGroup.position.set(width / 2 + 0.35, 0, zPos);
+
+                const pole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.06, 0.08, 3.2, 8),
+                    new THREE.MeshLambertMaterial({ color: 0x475569 })
+                );
+                pole.position.y = 1.6;
+                poleGroup.add(pole);
+
+                const arm = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.7, 0.06, 0.06),
+                    new THREE.MeshLambertMaterial({ color: 0x475569 })
+                );
+                arm.position.set(-0.3, 3.15, 0);
+                poleGroup.add(arm);
+
+                const bulb = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.14, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xfef08a })
+                );
+                bulb.position.set(-0.6, 3.1, 0);
+                poleGroup.add(bulb);
+
+                roadGroup.add(poleGroup);
+            }
+
+            scene.add(roadGroup);
+        }
+
+        function createTree(x, z, scale = 1) {
+            const tree = new THREE.Group();
+            tree.position.set(x, 0, z);
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.18 * scale, 0.25 * scale, 1.5 * scale, 7),
+                new THREE.MeshLambertMaterial({ color: 0x78350f })
+            );
+            trunk.position.y = 0.75 * scale;
+            tree.add(trunk);
+
+            const foliage = new THREE.Mesh(
+                new THREE.ConeGeometry(1.15 * scale, 2.6 * scale, 8),
+                new THREE.MeshLambertMaterial({ color: 0x15803d })
+            );
+            foliage.position.y = 2.4 * scale;
+            tree.add(foliage);
+            scene.add(tree);
+        }
+
+        function buildVillageSite(v) {
+            const siteGroup = new THREE.Group();
+            siteGroup.position.set(v.pos.x, 0, v.pos.z);
+
+            // Landasan beton
+            const pad = new THREE.Mesh(
+                new THREE.BoxGeometry(6.4, 0.16, 5.4),
+                new THREE.MeshLambertMaterial({ color: 0x64748b })
+            );
+            pad.position.y = 0.08;
+            siteGroup.add(pad);
+
+            // Rumah warga desa untuk menerima aliran listrik
+            const house = new THREE.Group();
+            house.position.set(4.5, 0, -2.5);
+            const walls = new THREE.Mesh(
+                new THREE.BoxGeometry(2.6, 1.8, 2.4),
+                new THREE.MeshLambertMaterial({ color: 0xf8fafc })
+            );
+            walls.position.y = 0.9;
+            house.add(walls);
+
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(2.1, 1.2, 4),
+                new THREE.MeshLambertMaterial({ color: v.color })
+            );
+            roof.position.y = 2.4;
+            roof.rotation.y = Math.PI / 4;
+            house.add(roof);
+
+            const windowMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+            const winMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.6), windowMat);
+            winMesh.position.set(0, 1.0, 1.22);
+            house.add(winMesh);
+            siteGroup.add(house);
+
+            // Grup 1: Area Konstruksi Awal (muncul sebelum dirakit)
+            const constructionGroup = new THREE.Group();
+            for (let cx = -2; cx <= 2; cx += 2) {
+                const stake = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.08, 1.1, 8),
+                    new THREE.MeshLambertMaterial({ color: 0xf97316 })
+                );
+                stake.position.set(cx, 0.6, 0);
+                constructionGroup.add(stake);
+            }
+            const crate = new THREE.Mesh(
+                new THREE.BoxGeometry(1.1, 0.7, 0.8),
+                new THREE.MeshLambertMaterial({ color: 0xb45309 })
+            );
+            crate.position.set(-1.5, 0.45, 1.2);
+            constructionGroup.add(crate);
+            siteGroup.add(constructionGroup);
+
+            // Grup 2: Pembangkit Listrik Lengkap + Bukti Transmisi (muncul setelah dirakit)
+            const activePlantGroup = new THREE.Group();
+            activePlantGroup.visible = false;
+
+            if (v.id === 'surya') {
+                for (let px = -1.8; px <= 1.8; px += 1.8) {
+                    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.1, 0.2), new THREE.MeshLambertMaterial({ color: 0x475569 }));
+                    stand.position.set(px, 0.6, 0);
+                    activePlantGroup.add(stand);
+
+                    const panel = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 2.2), new THREE.MeshLambertMaterial({ color: 0x1d4ed8 }));
+                    panel.position.set(px, 1.25, 0);
+                    panel.rotation.x = 0.42;
+                    activePlantGroup.add(panel);
+                }
+            } else if (v.id === 'tirta') {
+                const houseTurbine = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.0, 2.2), new THREE.MeshLambertMaterial({ color: 0x0284c7 }));
+                houseTurbine.position.set(-0.6, 1.1, 0);
+                activePlantGroup.add(houseTurbine);
+
+                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.5, 12), new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(1.0, 1.2, 0);
+                activePlantGroup.add(wheel);
+                animatedTurbines.push({ mesh: wheel, axis: 'x', speed: 0.08 });
+            } else if (v.id === 'bayu') {
+                const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.35, 5.4, 12), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+                tower.position.set(0, 2.8, 0);
+                activePlantGroup.add(tower);
+
+                const rotorHub = new THREE.Group();
+                rotorHub.position.set(0, 5.4, 0.35);
+                for (let b = 0; b < 3; b++) {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.22, 2.3, 0.06), new THREE.MeshLambertMaterial({ color: 0x14b8a6 }));
+                    blade.position.y = 1.1;
+                    const pivot = new THREE.Group();
+                    pivot.rotation.z = (b * Math.PI * 2) / 3;
+                    pivot.add(blade);
+                    rotorHub.add(pivot);
+                }
+                activePlantGroup.add(rotorHub);
+                animatedTurbines.push({ mesh: rotorHub, axis: 'z', speed: 0.07 });
+            } else if (v.id === 'makmur') {
+                const dome = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0x65a30d }));
+                dome.position.set(-0.6, 0.16, 0);
+                activePlantGroup.add(dome);
+
+                const genBox = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.2, 1.4), new THREE.MeshLambertMaterial({ color: 0xfacc15 }));
+                genBox.position.set(1.8, 0.76, 0);
+                activePlantGroup.add(genBox);
+            } else if (v.id === 'kawah') {
+                const mainPlant = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.2, 2.4), new THREE.MeshLambertMaterial({ color: 0xea580c }));
+                mainPlant.position.set(-0.8, 1.2, 0);
+                activePlantGroup.add(mainPlant);
+
+                const coolingTower = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.15, 3.2, 14), new THREE.MeshLambertMaterial({ color: 0xcbd5e1 }));
+                coolingTower.position.set(1.6, 1.7, 0);
+                activePlantGroup.add(coolingTower);
+            }
+
+            // Gardu Suar Hijau Menyala & Kabel Transmisi ke Rumah Warga
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 3.0, 8), new THREE.MeshLambertMaterial({ color: 0x334155 }));
+            pole.position.set(2.4, 1.6, -1.0);
+            activePlantGroup.add(pole);
+
+            const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+            beacon.position.set(2.4, 3.2, -1.0);
+            activePlantGroup.add(beacon);
+
+            const startPt = new THREE.Vector3(2.4, 3.0, -1.0);
+            const endPt = new THREE.Vector3(4.5, 2.2, -2.5);
+            const wireLen = startPt.distanceTo(endPt);
+            const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, wireLen, 6), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            wire.position.copy(startPt).lerp(endPt, 0.5);
+            wire.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), endPt.clone().sub(startPt).normalize());
+            activePlantGroup.add(wire);
+
+            const pulseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+            activePlantGroup.add(pulseMesh);
+            electricPulses.push({ mesh: pulseMesh, start: startPt, end: endPt, t: 0 });
+
+            siteGroup.add(activePlantGroup);
+            scene.add(siteGroup);
+
+            villageVisuals[v.id] = { constructionGroup, activePlantGroup, windowMat };
+        }
+
+        function activateVillage3DPowerPlant(villageId) {
+            const vis = villageVisuals[villageId];
+            if (!vis) return;
+            vis.constructionGroup.visible = false;
+            vis.activePlantGroup.visible = true;
+            vis.windowMat.color.setHex(0xfef08a);
+        }
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x7dd3fc);
+            scene.fog = new THREE.Fog(0x7dd3fc, 45, 115);
+
+            const isPortrait = window.innerHeight > window.innerWidth;
+            camera = new THREE.PerspectiveCamera(isPortrait ? 68 : 55, window.innerWidth / window.innerHeight, 0.1, 200);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Pencahayaan Matahari & Ambient
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3f6212, 0.85);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.9);
+            dirLight.position.set(25, 45, 20);
+            scene.add(dirLight);
+
+            // Daratan Utama Kecamatan Harapan
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(140, 140),
+                new THREE.MeshLambertMaterial({ color: 0x4d7c0f })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            // Sungai Desa Tirta
+            const river = new THREE.Mesh(
+                new THREE.PlaneGeometry(5.5, 90),
+                new THREE.MeshLambertMaterial({ color: 0x0284c7 })
+            );
+            river.rotation.x = -Math.PI / 2;
+            river.position.set(31, 0.03, 0);
+            scene.add(river);
+
+            // Gunung Berapi Desa Kawah
+            const volcano = new THREE.Mesh(
+                new THREE.ConeGeometry(14, 18, 16),
+                new THREE.MeshLambertMaterial({ color: 0x57534e })
+            );
+            volcano.position.set(34, 9, -24);
+            scene.add(volcano);
+
+            // Balai Kecamatan Pusat
+            const hall = new THREE.Mesh(
+                new THREE.BoxGeometry(6, 3.2, 4.5),
+                new THREE.MeshLambertMaterial({ color: 0xf1f5f9 })
+            );
+            hall.position.set(0, 1.6, 0);
+            scene.add(hall);
+            const hallRoof = new THREE.Mesh(
+                new THREE.ConeGeometry(4.8, 2.0, 4),
+                new THREE.MeshLambertMaterial({ color: 0xb91c1c })
+            );
+            hallRoof.position.set(0, 4.2, 0);
+            hallRoof.rotation.y = Math.PI / 4;
+            scene.add(hallRoof);
+
+            // Jaringan Jalan Raya Realistis Menuju 5 Desa
+            createRoadStrip(0, 8, -26, 12, 3.0);
+            createRoadStrip(0, 8, 25, 18, 3.0);
+            createRoadStrip(0, 8, -16, -25, 3.0);
+            createRoadStrip(0, 8, 7, 25, 3.0);
+            createRoadStrip(0, 8, 24, -14, 3.0);
+
+            // Pepohonan Teratur di Zona Ekosistem (Hutan Gunung & Tepi Sungai, Sabana Surya Tetap Terbuka)
+            const treeCoords = [
+                [-8, -14], [-11, -18], [-22, -20], [-24, -28],
+                [16, -18], [19, -22], [28, -8], [22, -24],
+                [21, 10], [28, 12], [28, 25], [18, 24],
+                [-6, 18], [-12, 24], [14, 28], [2, 31]
+            ];
+            treeCoords.forEach(([tx, tz], idx) => createTree(tx, tz, 0.9 + (idx % 3) * 0.2));
+
+            // Bangun 5 Lokasi Pembangkit Desa
+            VILLAGES_DATA.forEach(v => {
+                buildVillageSite(v);
+                if (gameState.assembledVillages[v.id]) {
+                    activateVillage3DPowerPlant(v.id);
+                }
+            });
+
+            // Bangun 10 Warga Desa Interaktif (NPC)
+            VILLAGER_NPCS.forEach(npc => {
+                const npcMesh = createPersonMesh(npc.shirtColor, npc.pantsColor, false);
+                npcMesh.position.set(npc.pos.x, 0, npc.pos.z);
+                npcMesh.userData.npcData = npc;
+                scene.add(npcMesh);
+                npcInteractMeshes.push(npcMesh);
+            });
+
+            // Karakter Pemain Teknisi Muda
+            playerGroup = createPersonMesh(0x10b981, 0x1e293b, true);
+            playerGroup.position.set(0, 0, 8);
+            scene.add(playerGroup);
+
+            // Kontrol Keyboard & Sentuh Kamera
+            window.addEventListener('keydown', e => {
+                if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keysPressed.up = true;
+                if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keysPressed.down = true;
+                if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keysPressed.left = true;
+                if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keysPressed.right = true;
+            });
+            window.addEventListener('keyup', e => {
+                if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keysPressed.up = false;
+                if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keysPressed.down = false;
+                if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keysPressed.left = false;
+                if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keysPressed.right = false;
+            });
+
+            let isDragging = false;
+            let prevPointerX = 0;
+            let prevPointerY = 0;
+            const dom = renderer.domElement;
+
+            dom.addEventListener('pointerdown', e => {
+                isDragging = true;
+                prevPointerX = e.clientX;
+                prevPointerY = e.clientY;
+            });
+            window.addEventListener('pointermove', e => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevPointerX;
+                const dy = e.clientY - prevPointerY;
+                prevPointerX = e.clientX;
+                prevPointerY = e.clientY;
+                cameraYaw -= dx * 0.007;
+                cameraPitch = Math.max(0.18, Math.min(1.15, cameraPitch + dy * 0.005));
+            });
+            window.addEventListener('pointerup', () => {
+                isDragging = false;
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            animate3D();
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            const isPortrait = window.innerHeight > window.innerWidth;
+            camera.fov = isPortrait ? 68 : 55;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateProximityInteractions() {
+            if (!playerGroup) return;
+            const px = playerGroup.position.x;
+            const pz = playerGroup.position.z;
+
+            // 1. Cek kedekatan dengan 5 lokasi pembangkit desa
+            let nearestVillage = null;
+            let minVDist = 5.6;
+            for (const v of VILLAGES_DATA) {
+                const dist = Math.hypot(px - v.pos.x, pz - v.pos.z);
+                if (dist < minVDist) {
+                    minVDist = dist;
+                    nearestVillage = v;
+                }
+            }
+
+            const banner = document.getElementById('proximity-banner');
+            if (nearestVillage) {
+                const isDone = !!gameState.completedVillages[nearestVillage.id];
+                const isBuilt = !!gameState.assembledVillages[nearestVillage.id];
+                document.getElementById('proxBadge').textContent = isDone
+                    ? '✅ Misi Desa Selesai'
+                    : isBuilt
+                        ? '⚡ Pembangkit Menyala • Siap Kuis'
+                        : '🛠️ Lokasi Konstruksi PLT';
+                document.getElementById('proxTitle').textContent = `${nearestVillage.name} — ${nearestVillage.plantName.split(' ')[0]}`;
+                document.getElementById('proxSub').textContent = isDone
+                    ? `Skor: ${gameState.scores[nearestVillage.id]} Poin (Klik untuk tinjau ulang)`
+                    : 'Pelajari materi IPAS, rakit pembangkit & jawab kuis';
+                const btn = document.getElementById('proxActionBtn');
+                btn.textContent = isDone ? 'Tinjau Misi' : 'Buka Misi';
+                btn.onclick = () => openMissionModal(nearestVillage.id);
+                banner.classList.remove('hidden');
+                return;
+            }
+
+            // 2. Cek kedekatan dengan warga desa untuk tombol ngobrol
+            let nearestNpc = null;
+            let minNpcDist = 3.2;
+            for (const npc of VILLAGER_NPCS) {
+                const dist = Math.hypot(px - npc.pos.x, pz - npc.pos.z);
+                if (dist < minNpcDist) {
+                    minNpcDist = dist;
+                    nearestNpc = npc;
+                }
+            }
+
+            if (nearestNpc) {
+                document.getElementById('proxBadge').textContent = '💬 Warga Desa';
+                document.getElementById('proxTitle').textContent = nearestNpc.name;
+                document.getElementById('proxSub').textContent = nearestNpc.role;
+                const btn = document.getElementById('proxActionBtn');
+                btn.textContent = 'Ngobrol';
+                btn.onclick = () => openNpcDialog(nearestNpc);
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        let walkCycleTime = 0;
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if (!playerGroup || !camera || !renderer) return;
+
+            const speed = 0.16;
+            let forward = 0;
+            let strafe = 0;
+            if (keysPressed.up) forward += 1;
+            if (keysPressed.down) forward -= 1;
+            if (keysPressed.left) strafe -= 1;
+            if (keysPressed.right) strafe += 1;
+
+            const isMoving = forward !== 0 || strafe !== 0;
+
+            if (isMoving) {
+                const sinY = Math.sin(cameraYaw);
+                const cosY = Math.cos(cameraYaw);
+                const moveX = (-sinY * forward + cosY * strafe) * speed;
+                const moveZ = (-cosY * forward - sinY * strafe) * speed;
+
+                playerGroup.position.x = Math.max(-42, Math.min(42, playerGroup.position.x + moveX));
+                playerGroup.position.z = Math.max(-42, Math.min(42, playerGroup.position.z + moveZ));
+                playerGroup.rotation.y = Math.atan2(moveX, moveZ);
+
+                walkCycleTime += 0.2;
+                const swing = Math.sin(walkCycleTime) * 0.55;
+                const limbs = playerGroup.userData.limbs;
+                if (limbs) {
+                    limbs.leftLegPivot.rotation.x = swing;
+                    limbs.rightLegPivot.rotation.x = -swing;
+                    // Tekuk lutut secara alami saat kaki melangkah ke depan/belakang
+                    limbs.leftKneePivot.rotation.x = Math.max(0, -Math.cos(walkCycleTime) * 0.55);
+                    limbs.rightKneePivot.rotation.x = Math.max(0, Math.cos(walkCycleTime) * 0.55);
+
+                    limbs.leftArmPivot.rotation.x = -swing * 0.72;
+                    limbs.rightArmPivot.rotation.x = swing * 0.72;
+                    // Siku sedikit menekuk alami saat berjalan
+                    limbs.leftElbowPivot.rotation.x = -0.25 - Math.max(0, swing * 0.35);
+                    limbs.rightElbowPivot.rotation.x = -0.25 - Math.max(0, -swing * 0.35);
+                }
+                playerGroup.position.y = Math.abs(Math.sin(walkCycleTime)) * 0.045;
+            } else {
+                const limbs = playerGroup.userData.limbs;
+                if (limbs) {
+                    limbs.leftLegPivot.rotation.x *= 0.8;
+                    limbs.rightLegPivot.rotation.x *= 0.8;
+                    limbs.leftKneePivot.rotation.x *= 0.8;
+                    limbs.rightKneePivot.rotation.x *= 0.8;
+                    limbs.leftArmPivot.rotation.x *= 0.8;
+                    limbs.rightArmPivot.rotation.x *= 0.8;
+                    limbs.leftElbowPivot.rotation.x += (-0.12 - limbs.leftElbowPivot.rotation.x) * 0.15;
+                    limbs.rightElbowPivot.rotation.x += (-0.12 - limbs.rightElbowPivot.rotation.x) * 0.15;
+                }
+                playerGroup.position.y *= 0.8;
+            }
+
+            // Animasi putaran kincir air & turbin angin yang sudah dirakit
+            animatedTurbines.forEach(item => {
+                if (item.mesh.parent && item.mesh.parent.visible) {
+                    item.mesh.rotation[item.axis] += item.speed;
+                }
+            });
+
+            // Animasi pulsa cahaya listrik di sepanjang kabel transmisi
+            electricPulses.forEach(p => {
+                if (p.mesh.parent && p.mesh.parent.visible) {
+                    p.t = (p.t + 0.018) % 1;
+                    p.mesh.position.lerpVectors(p.start, p.end, p.t);
+                }
+            });
+
+            updateProximityInteractions();
+
+            const camX = playerGroup.position.x + Math.sin(cameraYaw) * Math.cos(cameraPitch) * cameraDistance;
+            const camY = playerGroup.position.y + Math.sin(cameraPitch) * cameraDistance + 1.4;
+            const camZ = playerGroup.position.z + Math.cos(cameraYaw) * Math.cos(cameraPitch) * cameraDistance;
+            camera.position.set(camX, camY, camZ);
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('load', () => {
+            updateMusicUI();
+            syncBackgroundMusic();
+        });
+    </script>
+</body>
+</html>
